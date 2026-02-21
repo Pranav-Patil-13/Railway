@@ -7,10 +7,13 @@ export const connectDB = async () => {
             throw new Error('MONGO_URI must be defined in the .env file');
         }
 
-        const conn = await mongoose.connect(mongoURI);
+        const conn = await mongoose.connect(mongoURI, {
+            connectTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+        });
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error('Error connecting to MongoDB:', error);
-        process.exit(1); // Exit process with failure
+        // Don't exit process, let it try to handle health checks
     }
 };

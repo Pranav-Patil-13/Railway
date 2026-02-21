@@ -13,6 +13,12 @@ dotenv.config();
 // Connect to database
 connectDB();
 
+console.log('--- Environment Check ---');
+console.log('Current Workdir:', process.cwd());
+console.log('__dirname:', __dirname);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('------------------------');
+
 const app: Express = express();
 
 // Body parser
@@ -41,17 +47,22 @@ app.use(errorHandler);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-    // __dirname is the current directory (server/dist)
-    // We go up two levels: out of dist, then out of server, then into client/dist
-    const distPath = path.join(__dirname, '../../client/dist');
+    // Navigate from server/dist to project root then to client/dist
+    const distPath = path.resolve(__dirname, '..', '..', 'client', 'dist');
+
+    console.log('Attempting to serve static files from:', distPath);
 
     app.use(express.static(distPath));
 
-    // Final catch-all for SPA routes
     app.use((req: Request, res: Response) => {
-        // Only serve index.html for non-API requests
         if (!req.url.startsWith('/api')) {
-            res.sendFile(path.join(distPath, 'index.html'));
+            const indexPath = path.join(distPath, 'index.html');
+            res.sendFile(indexPath, (err) => {
+                if (err) {
+                    console.error('Failed to send index.html. Path tried:', indexPath);
+                    res.status(500).send('Frontend build missing. Please check build logs.');
+                }
+            });
         } else {
             res.status(404).json({ error: 'API route not found' });
         }
