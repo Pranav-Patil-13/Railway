@@ -42,7 +42,7 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(rootPath, 'client/dist')));
 
     // Catch-all route to handle React Router routes
-    app.get('*', (req: Request, res: Response) => {
+    app.get('/*', (req: Request, res: Response) => {
         // Don't intercept API routes
         if (!req.url.startsWith('/api')) {
             res.sendFile(path.join(rootPath, 'client/dist', 'index.html'));
