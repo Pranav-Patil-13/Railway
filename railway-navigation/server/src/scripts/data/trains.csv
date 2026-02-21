@@ -1,0 +1,11 @@
+trainNumber,trainName,source,destination,runningDays,stops
+12951,Mumbai Rajdhani Express,Mumbai Central (MMCT),New Delhi (NDLS),"Mon,Tue,Wed,Thu,Fri,Sat,Sun","MMCT:--:16:35|BRC:20:55:21:00|RTM:23:05:23:10|KOTA:02:10:02:15|SWM:04:47:04:49|MTJ:06:00:06:02|NDLS:08:35:--"
+12301,Howrah Rajdhani Express,Howrah (HWH),New Delhi (NDLS),"Mon,Tue,Wed,Thu,Fri,Sat,Sun","HWH:--:16:50|DHN:20:10:20:15|GMO:20:43:20:45|KOAA:22:15:22:20|MGS:00:55:01:00|ALD:03:07:03:12|CNB:04:37:04:42|NDLS:09:55:--"
+12049,Gatimaan Express,Hazrat Nizamuddin (NZM),Jhansi Junction (JHS),"Mon,Tue,Wed,Thu,Fri,Sat","NZM:--:08:10|AGC:09:50:09:52|DHO:10:35:10:37|MRA:10:55:10:57|GWL:11:55:12:00|DBA:12:30:12:32|JHS:13:00:--"
+12002,Bhopal Shatabdi Express,New Delhi (NDLS),Bhopal Junction (BPL),"Mon,Tue,Wed,Thu,Fri,Sat","NDLS:--:06:00|MTJ:07:52:07:54|AGC:08:05:08:10|GWL:09:30:09:32|JHS:11:10:11:15|LLT:12:40:12:42|BPL:14:30:--"
+12622,Tamil Nadu Express,New Delhi (NDLS),Chennai Central (MAS),"Mon,Tue,Wed,Thu,Fri,Sat,Sun","NDLS:--:22:30|MTJ:00:36:00:41|AGC:01:13:01:18|JHS:04:10:04:15|BPL:08:35:08:50|NGP:14:50:15:05|BZA:22:15:22:25|MAS:05:50:--"
+12259,Sealdah Duronto Express,Sealdah (SDAH),New Delhi (NDLS),"Mon,Thu,Sat","SDAH:--:20:05|NDLS:10:25:--"
+12431,Trivandrum Rajdhani Express,Hazrat Nizamuddin (NZM),Trivandrum Central (TVC),"Tue,Fri","NZM:--:11:10|BPL:18:55:19:05|NGP:01:40:01:55|BZA:09:00:09:15|ERS:19:40:19:50|TVC:23:25:--"
+12723,Telangana Express,New Delhi (NDLS),Hyderabad (HYB),"Mon,Tue,Wed,Thu,Fri,Sat,Sun","NDLS:--:06:55|AGC:09:40:09:50|JHS:13:00:13:10|BPL:17:10:17:30|NGP:23:45:00:05|KZJ:05:20:05:25|SC:07:40:07:50|HYB:08:20:--"
+12627,Karnataka Express,New Delhi (NDLS),Bangalore (SBC),"Mon,Tue,Wed,Thu,Fri,Sat,Sun","NDLS:--:21:20|AGC:00:05:00:10|JHS:03:35:03:40|BPL:08:20:08:35|KDG:12:00:12:05|GTL:19:20:19:35|DHM:22:08:22:13|SBC:06:20:--"
+12625,Kerala Express,New Delhi (NDLS),Trivandrum Central (TVC),"Mon,Tue,Wed,Thu,Fri,Sat,Sun","NDLS:--:11:25|MTJ:13:32:13:37|AGC:14:20:14:25|JHS:17:30:17:35|BPL:22:15:22:30|NGP:05:15:05:30|BZA:13:15:13:30|ERS:01:00:01:10|TVC:05:05:--"

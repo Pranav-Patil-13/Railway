@@ -1,0 +1,270 @@
+[
+    {
+        "trainNumber": "12951",
+        "trainName": "Mumbai Rajdhani Express",
+        "source": "Mumbai Central (MMCT)",
+        "destination": "New Delhi (NDLS)",
+        "runningDays": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            "Sun"
+        ],
+        "stops": [
+            {
+                "stationCode": "MMCT",
+                "arrival": "--",
+                "departure": "16:35"
+            },
+            {
+                "stationCode": "BRC",
+                "arrival": "20:55",
+                "departure": "21:00"
+            },
+            {
+                "stationCode": "RTM",
+                "arrival": "23:05",
+                "departure": "23:10"
+            },
+            {
+                "stationCode": "KOTA",
+                "arrival": "02:10",
+                "departure": "02:15"
+            },
+            {
+                "stationCode": "SWM",
+                "arrival": "04:47",
+                "departure": "04:49"
+            },
+            {
+                "stationCode": "MTJ",
+                "arrival": "06:00",
+                "departure": "06:02"
+            },
+            {
+                "stationCode": "NDLS",
+                "arrival": "08:35",
+                "departure": "--"
+            }
+        ]
+    },
+    {
+        "trainNumber": "12301",
+        "trainName": "Howrah Rajdhani Express",
+        "source": "Howrah (HWH)",
+        "destination": "New Delhi (NDLS)",
+        "runningDays": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            "Sun"
+        ],
+        "stops": [
+            {
+                "stationCode": "HWH",
+                "arrival": "--",
+                "departure": "16:50"
+            },
+            {
+                "stationCode": "DHN",
+                "arrival": "20:10",
+                "departure": "20:15"
+            },
+            {
+                "stationCode": "GMO",
+                "arrival": "20:43",
+                "departure": "20:45"
+            },
+            {
+                "stationCode": "KOAA",
+                "arrival": "22:15",
+                "departure": "22:20"
+            },
+            {
+                "stationCode": "MGS",
+                "arrival": "00:55",
+                "departure": "01:00"
+            },
+            {
+                "stationCode": "ALD",
+                "arrival": "03:07",
+                "departure": "03:12"
+            },
+            {
+                "stationCode": "CNB",
+                "arrival": "04:37",
+                "departure": "04:42"
+            },
+            {
+                "stationCode": "NDLS",
+                "arrival": "09:55",
+                "departure": "--"
+            }
+        ]
+    },
+    {
+        "trainNumber": "12049",
+        "trainName": "Gatimaan Express",
+        "source": "Hazrat Nizamuddin (NZM)",
+        "destination": "Jhansi Junction (JHS)",
+        "runningDays": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat"
+        ],
+        "stops": [
+            {
+                "stationCode": "NZM",
+                "arrival": "--",
+                "departure": "08:10"
+            },
+            {
+                "stationCode": "AGC",
+                "arrival": "09:50",
+                "departure": "09:52"
+            },
+            {
+                "stationCode": "DHO",
+                "arrival": "10:35",
+                "departure": "10:37"
+            },
+            {
+                "stationCode": "MRA",
+                "arrival": "10:55",
+                "departure": "10:57"
+            },
+            {
+                "stationCode": "GWL",
+                "arrival": "11:55",
+                "departure": "12:00"
+            },
+            {
+                "stationCode": "DBA",
+                "arrival": "12:30",
+                "departure": "12:32"
+            },
+            {
+                "stationCode": "JHS",
+                "arrival": "13:00",
+                "departure": "--"
+            }
+        ]
+    },
+    {
+        "trainNumber": "12002",
+        "trainName": "Bhopal Shatabdi Express",
+        "source": "New Delhi (NDLS)",
+        "destination": "Bhopal Junction (BPL)",
+        "runningDays": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat"
+        ],
+        "stops": [
+            {
+                "stationCode": "NDLS",
+                "arrival": "--",
+                "departure": "06:00"
+            },
+            {
+                "stationCode": "MTJ",
+                "arrival": "07:52",
+                "departure": "07:54"
+            },
+            {
+                "stationCode": "AGC",
+                "arrival": "08:05",
+                "departure": "08:10"
+            },
+            {
+                "stationCode": "GWL",
+                "arrival": "09:30",
+                "departure": "09:32"
+            },
+            {
+                "stationCode": "JHS",
+                "arrival": "11:10",
+                "departure": "11:15"
+            },
+            {
+                "stationCode": "LLT",
+                "arrival": "12:40",
+                "departure": "12:42"
+            },
+            {
+                "stationCode": "BPL",
+                "arrival": "14:30",
+                "departure": "--"
+            }
+        ]
+    },
+    {
+        "trainNumber": "12622",
+        "trainName": "Tamil Nadu Express",
+        "source": "New Delhi (NDLS)",
+        "destination": "Chennai Central (MAS)",
+        "runningDays": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            "Sun"
+        ],
+        "stops": [
+            {
+                "stationCode": "NDLS",
+                "arrival": "--",
+                "departure": "22:30"
+            },
+            {
+                "stationCode": "MTJ",
+                "arrival": "00:36",
+                "departure": "00:41"
+            },
+            {
+                "stationCode": "AGC",
+                "arrival": "01:13",
+                "departure": "01:18"
+            },
+            {
+                "stationCode": "JHS",
+                "arrival": "04:10",
+                "departure": "04:15"
+            },
+            {
+                "stationCode": "BPL",
+                "arrival": "08:35",
+                "departure": "08:50"
+            },
+            {
+                "stationCode": "NGP",
+                "arrival": "14:50",
+                "departure": "15:05"
+            },
+            {
+                "stationCode": "BZA",
+                "arrival": "22:15",
+                "departure": "22:25"
+            },
+            {
+                "stationCode": "MAS",
+                "arrival": "05:50",
+                "departure": "--"
+            }
+        ]
+    }
+]
