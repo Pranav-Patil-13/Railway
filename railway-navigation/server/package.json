@@ -9,6 +9,7 @@
     "seed": "ts-node src/scripts/seedTrains.ts",
     "import:trains": "ts-node src/scripts/importTrains.ts",
     "import:kaggle": "ts-node src/scripts/importKaggle.ts",
+    "import:stations": "ts-node src/scripts/importStations.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

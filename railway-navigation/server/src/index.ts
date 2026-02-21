@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import trainRoutes from './routes/trainRoutes';
+import stationRoutes from './routes/stationRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load env vars
@@ -36,6 +37,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // Mount routers
 app.use('/api/trains', trainRoutes);
+app.use('/api/stations', stationRoutes);
 
 // API Home/Status
 app.get('/api', (req: Request, res: Response) => {

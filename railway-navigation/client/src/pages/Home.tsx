@@ -4,8 +4,16 @@ import { Button } from '../components/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '../components/Card';
 import { Search, Map, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { RouteExplorer } from '../components/RouteExplorer';
+import { useRef } from 'react';
 
 export function Home() {
+    const explorerRef = useRef<HTMLDivElement>(null);
+
+    const scrollToExplorer = () => {
+        explorerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
     return (
         <PageWrapper>
             <Navbar />
@@ -28,13 +36,25 @@ export function Home() {
                                     Search Trains Now
                                 </Button>
                             </Link>
-                            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 px-8">
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="w-full sm:w-auto text-base h-12 px-8"
+                                onClick={scrollToExplorer}
+                            >
                                 Explore Routes
                             </Button>
                         </div>
                     </div>
                 </Container>
             </section>
+
+            {/* Route Explorer Section */}
+            <div ref={explorerRef}>
+                <Container>
+                    <RouteExplorer className="-mt-12" />
+                </Container>
+            </div>
 
             {/* Features Grid */}
             <section className="py-16 -mt-16">

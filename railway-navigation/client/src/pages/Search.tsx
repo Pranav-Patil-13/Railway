@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Container, PageWrapper } from '../components/Layout';
 import { Navbar } from '../components/Navbar';
 import { Input } from '../components/Input';
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/States';
 import { TrainDetailsCard } from '../components/TrainDetailsCard';
+import { RouteExplorer } from '../components/RouteExplorer';
 
 const POPULAR_TRAINS = [
     { number: '12951', name: 'Mumbai Rajdhani' },
@@ -28,12 +30,7 @@ const POPULAR_TRAINS = [
     { number: '12301', name: 'Howrah Rajdhani' },
 ];
 
-const FEATURED_ROUTES = [
-    { from: 'Mumbai', to: 'Delhi', trainNumber: '12951' },
-    { from: 'Delhi', to: 'Bhopal', trainNumber: '12002' },
-    { from: 'Delhi', to: 'Jhansi', trainNumber: '12049' },
-    { from: 'Howrah', to: 'Delhi', trainNumber: '12301' },
-];
+
 
 export function Search() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -43,13 +40,28 @@ export function Search() {
     const [error, setError] = useState<string | null>(null);
     const [hasSearched, setHasSearched] = useState(false);
     const [recentSearches, setRecentSearches] = useState<{ number: string, name: string }[]>([]);
+    const [searchMode, setSearchMode] = useState<'train' | 'route'>('train');
+
+    const [searchParams] = useSearchParams();
 
     useEffect(() => {
         const saved = localStorage.getItem('recentSearches');
         if (saved) {
             setRecentSearches(JSON.parse(saved));
         }
-    }, []);
+
+        const from = searchParams.get('from');
+        const to = searchParams.get('to');
+        const search = searchParams.get('search');
+
+        if (from || to) {
+            setSearchMode('route');
+            performSearch('', from || undefined, to || undefined);
+        } else if (search) {
+            setSearchMode('train');
+            performSearch(search);
+        }
+    }, [searchParams]);
 
     const addToRecent = (train: ITrain) => {
         const item = { number: train.trainNumber, name: train.trainName };
@@ -59,18 +71,28 @@ export function Search() {
         localStorage.setItem('recentSearches', JSON.stringify(updated));
     };
 
-    const performSearch = async (query: string) => {
-        if (!query.trim()) return;
+    const performSearch = async (query: string, from?: string, to?: string) => {
+        // If query is empty but from/to provided, it's valid route search
+        if (!query.trim() && !from && !to) return;
 
         setIsLoading(true);
         setError(null);
         setSelectedTrain(null);
         setSearchResults([]);
         setHasSearched(true);
-        setSearchQuery(query);
+        setSearchQuery(query || (from && to ? `${from} → ${to}` : from || to || ''));
 
         try {
-            const response = await TrainService.getAll(query.trim());
+            let response;
+
+            if (from || to) {
+                // Route-based search — uses the dedicated /routes endpoint
+                response = await TrainService.searchRoutes(from, to);
+            } else {
+                // Train name/number search
+                response = await TrainService.getAll(query.trim());
+            }
+
             if (response.success && response.data) {
                 const results = response.data;
                 setSearchResults(results);
@@ -126,25 +148,57 @@ export function Search() {
                             </p>
                         </div>
 
+                        {/* Search Mode Toggles */}
+                        <div className="flex justify-center -mb-8 relative z-10">
+                            <div className="flex bg-surface border border-border rounded-2xl p-1.5 shadow-lg shadow-black/5 ring-1 ring-border/50">
+                                <button
+                                    onClick={() => setSearchMode('train')}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all ${searchMode === 'train'
+                                        ? 'bg-primary text-white shadow-md shadow-primary/20'
+                                        : 'text-text-secondary hover:text-text-primary hover:bg-secondary/50'
+                                        }`}
+                                >
+                                    <TrainIcon className="h-4 w-4" />
+                                    Find Train
+                                </button>
+                                <button
+                                    onClick={() => setSearchMode('route')}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all ${searchMode === 'route'
+                                        ? 'bg-primary text-white shadow-md shadow-primary/20'
+                                        : 'text-text-secondary hover:text-text-primary hover:bg-secondary/50'
+                                        }`}
+                                >
+                                    <MapIcon className="h-4 w-4" />
+                                    Explore Routes
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Search Form */}
                         <Card className="border-t-4 border-t-primary shadow-xl ring-1 ring-border/50 overflow-visible">
-                            <CardContent className="pt-6">
-                                <form onSubmit={handleSearch} className="flex gap-3">
-                                    <div className="flex-1 relative">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <SearchIcon className="h-5 w-5 text-text-secondary" />
+                            <CardContent className="pt-10"> {/* Extra top padding for the tabs overlapping */}
+                                {searchMode === 'train' ? (
+                                    <form onSubmit={handleSearch} className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
+                                        <div className="flex-1 relative">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <SearchIcon className="h-5 w-5 text-text-secondary" />
+                                            </div>
+                                            <Input
+                                                placeholder="Enter train number or name (e.g. Rajdhani)"
+                                                className="pl-12 h-14 text-lg border-transparent bg-secondary/30 focus:bg-surface transition-all rounded-xl"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                            />
                                         </div>
-                                        <Input
-                                            placeholder="Enter train number or name (e.g. Rajdhani)"
-                                            className="pl-12 h-14 text-lg border-transparent bg-secondary/30 focus:bg-surface transition-all rounded-xl"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
+                                        <Button type="submit" size="lg" isLoading={isLoading} className="h-14 px-10 rounded-xl text-lg shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">
+                                            Search
+                                        </Button>
+                                    </form>
+                                ) : (
+                                    <div className="animate-in fade-in slide-in-from-right-2 duration-300">
+                                        <RouteExplorer minimal />
                                     </div>
-                                    <Button type="submit" size="lg" isLoading={isLoading} className="h-14 px-10 rounded-xl text-lg shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">
-                                        Search
-                                    </Button>
-                                </form>
+                                )}
                             </CardContent>
                         </Card>
 
@@ -178,37 +232,6 @@ export function Search() {
                                     </div>
                                 </div>
 
-                                {/* Featured Routes Section */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-text-primary px-1">
-                                        <MapIcon className="h-4 w-4 text-primary" />
-                                        <span className="font-bold uppercase tracking-wider text-sm">Featured Routes</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {FEATURED_ROUTES.map((route, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => performSearch(route.trainNumber)}
-                                                className="flex items-center justify-between p-4 bg-surface border border-border rounded-xl hover:border-primary hover:shadow-md transition-all group text-left active:scale-[0.98]"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-text-secondary group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                                        <MapPin className="h-5 w-5" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2 font-semibold text-text-primary truncate max-w-[180px]">
-                                                            {route.from} <ArrowRight className="h-3 w-3 text-text-secondary flex-shrink-0" /> {route.to}
-                                                        </div>
-                                                        <div className="text-xs text-text-secondary">Explore top connection</div>
-                                                    </div>
-                                                </div>
-                                                <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-secondary/50 group-hover:bg-primary group-hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                                                    <ArrowRight className="h-4 w-4" />
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
 
                                 {/* Statistics Banner */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">

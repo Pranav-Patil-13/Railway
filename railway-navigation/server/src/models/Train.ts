@@ -36,4 +36,7 @@ TrainSchema.index({ trainName: 'text' });
 // Compound index on source + destination
 TrainSchema.index({ source: 1, destination: 1 });
 
+// Index on stops.stationCode for route-based lookups
+TrainSchema.index({ 'stops.stationCode': 1 });
+
 export const Train = mongoose.model<ITrain>('Train', TrainSchema);
