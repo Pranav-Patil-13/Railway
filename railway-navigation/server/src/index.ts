@@ -31,27 +31,31 @@ if (process.env.NODE_ENV === 'development') {
 // Mount routers
 app.use('/api/trains', trainRoutes);
 
-// Base route handler
-app.get('/', (req: Request, res: Response) => {
+// API Home/Status
+app.get('/api', (req: Request, res: Response) => {
     res.json({ message: 'Welcome to Railway Navigation API' });
 });
+
+// Centralized error handler (must be after routes)
+app.use(errorHandler);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
     const rootPath = path.resolve();
-    app.use(express.static(path.join(rootPath, 'client/dist')));
+    const distPath = path.join(rootPath, 'client/dist');
 
-    // Catch-all route to handle React Router routes
-    app.get('/:path*', (req: Request, res: Response) => {
-        // Don't intercept API routes
+    app.use(express.static(distPath));
+
+    // Final catch-all for SPA routes (replaces app.get('*'))
+    app.use((req: Request, res: Response) => {
+        // Only serve index.html for non-API requests
         if (!req.url.startsWith('/api')) {
-            res.sendFile(path.join(rootPath, 'client/dist', 'index.html'));
+            res.sendFile(path.join(distPath, 'index.html'));
+        } else {
+            res.status(404).json({ error: 'API route not found' });
         }
     });
 }
-
-// Centralized error handler
-app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
