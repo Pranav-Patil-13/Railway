@@ -41,15 +41,13 @@ app.use(errorHandler);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-    const rootPath = path.resolve();
-    // If we're started from the server directory, the client is one level up
-    const distPath = path.basename(rootPath) === 'server'
-        ? path.join(rootPath, '..', 'client/dist')
-        : path.join(rootPath, 'client/dist');
+    // __dirname is the current directory (server/dist)
+    // We go up two levels: out of dist, then out of server, then into client/dist
+    const distPath = path.join(__dirname, '../../client/dist');
 
     app.use(express.static(distPath));
 
-    // Final catch-all for SPA routes (replaces app.get('*'))
+    // Final catch-all for SPA routes
     app.use((req: Request, res: Response) => {
         // Only serve index.html for non-API requests
         if (!req.url.startsWith('/api')) {
