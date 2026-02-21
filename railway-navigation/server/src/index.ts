@@ -42,7 +42,10 @@ app.use(errorHandler);
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
     const rootPath = path.resolve();
-    const distPath = path.join(rootPath, 'client/dist');
+    // If we're started from the server directory, the client is one level up
+    const distPath = path.basename(rootPath) === 'server'
+        ? path.join(rootPath, '..', 'client/dist')
+        : path.join(rootPath, 'client/dist');
 
     app.use(express.static(distPath));
 
