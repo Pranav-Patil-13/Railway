@@ -5,7 +5,7 @@ export const seedARLocations = async () => {
 
     // Check if it already has locations to avoid unnecessary writes
     const existing = await Station.findOne({ code: stationCode });
-    if (existing && existing.locations && existing.locations.has('platform_mid')) {
+    if (existing && existing.get('locations.platform_mid')) {
         console.log(`✅ AR locations for ${stationCode} already seeded.`);
         return;
     }
