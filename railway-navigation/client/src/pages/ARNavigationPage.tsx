@@ -1,93 +1,133 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import QRScanner from '../components/ar/QRScanner';
+import DestinationSelector from '../components/ar/DestinationSelector';
 import ARSessionManager from '../components/ar/ARSessionManager';
 import { getStationByCode } from '../services/stationService';
 import type { Coordinate } from '../types';
-import { Train, MapPin, ArrowLeft } from 'lucide-react';
+import { MapPin, ArrowLeft, ScanLine } from 'lucide-react';
+
+// Flow states: scan → select → navigate
+type FlowState = 'scanning' | 'selecting' | 'navigating';
 
 const ARNavigationPage: React.FC = () => {
-    const location = useLocation();
     const navigate = useNavigate();
 
-    // We expect the user to pass down a target coordinate identifier or exact coordinate via router state.
-    // E.g., navigating to coach 'B2'
-    const targetCoachIdentifier = location.state?.targetCoach || 'B2';
-
-    const [scannedLocation, setScannedLocation] = useState<Coordinate | null>(null);
-    const [targetLocation, setTargetLocation] = useState<Coordinate | null>(null);
+    const [flowState, setFlowState] = useState<FlowState>('scanning');
     const [error, setError] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
 
+    // Station data after QR scan
+    const [stationName, setStationName] = useState<string>('');
+    const [allLocations, setAllLocations] = useState<Record<string, Coordinate>>({});
+    const [currentLocation, setCurrentLocation] = useState<Coordinate | null>(null);
+
+    // Selected destination
+    const [targetLocation, setTargetLocation] = useState<Coordinate | null>(null);
+    const [targetLabel, setTargetLabel] = useState<string>('');
+
+    // Step 1: QR code scanned → fetch station data, store current position, move to selection
     const handleQRScan = React.useCallback(async (data: { station_id: string; location_id: string }) => {
         setLoading(true);
         setError('');
 
         try {
-            // Fetch station coordinates from backend
             const station = await getStationByCode(data.station_id);
 
             if (!station) {
-                setError('Station not found or invalid format.');
+                setError('Station not found. Invalid QR code.');
                 setLoading(false);
                 return;
             }
 
             if (!station.locations || !station.locations[data.location_id]) {
-                setError(`Location '${data.location_id}' not mapped in this station.`);
+                setError(`Location '${data.location_id}' is not mapped at this station.`);
                 setLoading(false);
                 return;
             }
 
-            // We need destination coords. First check if the destination coach exists in the map
-            const destinationKey = `coach_${targetCoachIdentifier}`;
+            // Save station data and current position
+            setStationName(station.name);
+            setAllLocations(station.locations);
+            setCurrentLocation(station.locations[data.location_id]);
 
-            if (!station.locations[destinationKey]) {
-                setError(`Target destination '${targetCoachIdentifier}' cannot be found at this station.`);
-                setLoading(false);
-                return;
-            }
-
-            // Successfully acquired coordinates
-            setScannedLocation(station.locations[data.location_id]);
-            setTargetLocation(station.locations[destinationKey]);
-
+            // Advance to destination selection
+            setFlowState('selecting');
         } catch (err) {
             console.error('Failed to handle QR scan', err);
             setError('An error occurred while fetching station data.');
         } finally {
             setLoading(false);
         }
-    }, [targetCoachIdentifier]);
+    }, []);
 
     const handleScannerError = React.useCallback((err: string) => {
         setError(err);
     }, []);
 
-    if (scannedLocation && targetLocation) {
-        // We have both coordinates; start the AR camera session
+    // Step 2: User selects destination → start AR navigation
+    const handleDestinationSelect = (key: string, label: string, coord: Coordinate) => {
+        setTargetLabel(label);
+        setTargetLocation(coord);
+        setFlowState('navigating');
+    };
+
+    // Reset back to a previous step
+    const goBack = () => {
+        if (flowState === 'navigating') {
+            setTargetLocation(null);
+            setTargetLabel('');
+            setFlowState('selecting');
+        } else if (flowState === 'selecting') {
+            setCurrentLocation(null);
+            setAllLocations({});
+            setStationName('');
+            setFlowState('scanning');
+        } else {
+            navigate(-1);
+        }
+    };
+
+    // ─── STEP 3: AR NAVIGATION ──────────────────────────
+    if (flowState === 'navigating' && currentLocation && targetLocation) {
         return (
             <div className="w-full h-screen overflow-hidden relative">
                 <button
-                    onClick={() => {
-                        // Resets state back to scanner
-                        setScannedLocation(null);
-                        setTargetLocation(null);
-                    }}
+                    onClick={goBack}
                     className="absolute z-50 top-6 left-6 bg-black/40 hover:bg-black/60 backdrop-blur-md p-2 rounded-full transition-colors"
                 >
                     <ArrowLeft className="w-6 h-6 shrink-0 text-white" />
                 </button>
                 <ARSessionManager
-                    currentLocation={scannedLocation}
+                    currentLocation={currentLocation}
                     targetLocation={targetLocation}
-                    targetLabel={`Coach ${targetCoachIdentifier}`}
+                    targetLabel={targetLabel}
                 />
             </div>
         );
     }
 
-    // Default view: QR Scanner
+    // ─── STEP 2: DESTINATION SELECTION ──────────────────
+    if (flowState === 'selecting' && currentLocation) {
+        return (
+            <div className="min-h-screen bg-slate-50">
+                {/* Back button */}
+                <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-md px-4 py-3 flex items-center gap-3 border-b border-slate-100">
+                    <button onClick={goBack} className="p-2 text-slate-500 hover:text-slate-800 transition-colors rounded-lg hover:bg-slate-100">
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <span className="text-sm font-semibold text-slate-700">Select Destination</span>
+                </div>
+                <DestinationSelector
+                    stationName={stationName}
+                    locations={allLocations}
+                    onSelect={handleDestinationSelect}
+                />
+            </div>
+        );
+    }
+
+    // ─── STEP 1: QR SCANNER ─────────────────────────────
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center py-12 px-4 selection:bg-indigo-100">
             {/* Header */}
@@ -108,23 +148,13 @@ const ARNavigationPage: React.FC = () => {
 
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 md:p-8 space-y-6">
                 <div className="text-center space-y-2">
+                    <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-2">
+                        <ScanLine className="w-6 h-6 text-indigo-600" />
+                    </div>
                     <h2 className="text-xl font-semibold text-slate-800">Scan QR to Start</h2>
                     <p className="text-sm text-slate-500 max-w-[280px] mx-auto">
-                        Locate an official Railway Navigation QR code on the platform and scan it to initialize AR.
+                        Find an official Railway Navigation QR code on the platform and scan it to set your current position.
                     </p>
-                </div>
-
-                {/* Target context (e.g. "To: Coach B2") */}
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-white p-2 rounded-lg shadow-sm">
-                            <Train className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Navigating To</p>
-                            <p className="font-bold text-indigo-900">Coach {targetCoachIdentifier}</p>
-                        </div>
-                    </div>
                 </div>
 
                 {error && (
@@ -135,7 +165,10 @@ const ARNavigationPage: React.FC = () => {
 
                 {loading ? (
                     <div className="aspect-square bg-slate-100 rounded-xl flex items-center justify-center border-2 border-slate-200 border-dashed">
-                        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="text-center space-y-3">
+                            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                            <p className="text-xs text-slate-400">Fetching station data...</p>
+                        </div>
                     </div>
                 ) : (
                     <QRScanner onScan={handleQRScan} onError={handleScannerError} />
