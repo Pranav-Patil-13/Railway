@@ -16,9 +16,19 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
     const overlayRef = useRef<HTMLDivElement>(null);
     const [distance, setDistance] = useState<number>(0);
     const [isSessionActive, setIsSessionActive] = useState(false);
+    const [xrSupported, setXrSupported] = useState<boolean | null>(null);
 
     useEffect(() => {
-        if (!containerRef.current) return;
+        // Check for WebXR support first
+        if ('xr' in navigator) {
+            navigator.xr?.isSessionSupported('immersive-ar').then((supported) => {
+                setXrSupported(supported);
+            });
+        } else {
+            setXrSupported(false);
+        }
+
+        if (!containerRef.current || xrSupported === false) return;
 
         // 1. Setup Three.js Scene
         const scene = new THREE.Scene();
@@ -134,7 +144,7 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
                 arButton.parentNode.removeChild(arButton);
             }
         };
-    }, [currentLocation, targetLocation]);
+    }, [currentLocation, targetLocation, xrSupported]);
 
     // Pre-session: show dark background so the white HUD and AR button are visible.
     // In-session: background MUST be transparent for camera passthrough.
