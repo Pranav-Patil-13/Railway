@@ -63,7 +63,7 @@ const ARNavigationPage: React.FC = () => {
     if (scannedLocation && targetLocation) {
         // We have both coordinates; start the AR WebXR Session
         return (
-            <div className="w-full h-screen overflow-hidden bg-black text-white">
+            <div className="w-full h-screen overflow-hidden bg-transparent text-white">
                 <button
                     onClick={() => {
                         // Resets state back to scanner
