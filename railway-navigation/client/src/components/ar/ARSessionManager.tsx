@@ -13,7 +13,9 @@ interface ARSessionManagerProps {
 
 const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, targetLocation, targetLabel }) => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const overlayRef = useRef<HTMLDivElement>(null);
     const [distance, setDistance] = useState<number>(0);
+    const [isSessionActive, setIsSessionActive] = useState(false);
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -31,11 +33,30 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
         renderer.xr.enabled = true; // Enable WebXR
         containerRef.current.appendChild(renderer.domElement);
 
-        // 4. Add AR Button to document
-        const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-        document.body.appendChild(arButton);
-        // Auto-click the button to start immediately if possible, but usually requires user interaction
-        arButton.click(); // Might not work without user gesture, but user clicked "Start AR" to get here!
+        // 4. Add AR Button to document with DOM Overlay
+        const arButton = ARButton.createButton(renderer, {
+            requiredFeatures: ['hit-test'],
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: overlayRef.current || document.body }
+        });
+
+        // Add custom styling so it's visible before clicking
+        arButton.style.backgroundColor = 'rgba(79, 70, 229, 0.9)'; // indigo-600
+        arButton.style.padding = '16px 24px';
+        arButton.style.borderRadius = '12px';
+        arButton.style.fontWeight = 'bold';
+        arButton.style.letterSpacing = '1px';
+        arButton.style.bottom = '15%';
+
+        if (overlayRef.current) {
+            overlayRef.current.appendChild(arButton);
+        } else {
+            document.body.appendChild(arButton);
+        }
+
+        // Listen for session start/end to remove dark background
+        renderer.xr.addEventListener('sessionstart', () => setIsSessionActive(true));
+        renderer.xr.addEventListener('sessionend', () => setIsSessionActive(false));
 
         // 5. Add Lights
         const light = new THREE.AmbientLight(0xffffff, 1);
@@ -109,33 +130,39 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
             window.removeEventListener('resize', onWindowResize);
             renderer.setAnimationLoop(null);
             renderer.domElement.remove();
-            if (document.body.contains(arButton)) {
-                document.body.removeChild(arButton);
+            if (arButton.parentNode) {
+                arButton.parentNode.removeChild(arButton);
             }
         };
     }, [currentLocation, targetLocation]);
 
+    // Pre-session: show dark background so the white HUD and AR button are visible.
+    // In-session: background MUST be transparent for camera passthrough.
     return (
-        <div className="relative w-full h-screen overflow-hidden bg-transparent">
+        <div
+            ref={overlayRef}
+            className={`relative w-full h-screen overflow-hidden ${isSessionActive ? 'bg-transparent' : 'bg-slate-900'} transition-colors duration-500`}
+        >
             {/* The canvas container */}
-            <div ref={containerRef} className="absolute inset-0 z-0 bg-transparent" />
+            <div ref={containerRef} className="absolute inset-0 z-0 bg-transparent pointer-events-none" />
 
             {/* HUD Overlay */}
             <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl text-white">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl text-white shadow-xl shadow-black/20">
                     <h3 className="text-sm font-semibold uppercase tracking-wider text-indigo-300">Destination</h3>
                     <p className="text-2xl font-bold">{targetLabel}</p>
                 </div>
 
-                <div className="bg-indigo-600/80 backdrop-blur-md p-4 rounded-xl text-white text-right">
+                <div className="bg-indigo-600/80 backdrop-blur-md p-4 rounded-xl text-white text-right shadow-xl shadow-indigo-900/20">
                     <h3 className="text-sm font-semibold uppercase tracking-wider text-indigo-200">Distance</h3>
                     <p className="text-2xl font-bold">{distance} <span className="text-sm font-normal">meters</span></p>
                 </div>
             </div>
 
-            <div className="absolute bottom-10 left-0 right-0 z-10 text-center pointer-events-none">
-                <p className="text-white/80 bg-black/50 inline-block px-4 py-2 rounded-full text-sm">
-                    Follow the green arrow to your coach
+            {/* Instructions */}
+            <div className="absolute bottom-8 left-0 right-0 z-10 text-center pointer-events-none">
+                <p className="text-white/90 bg-black/60 backdrop-blur-md inline-block px-5 py-3 rounded-full text-sm font-medium border border-white/10 shadow-lg">
+                    {isSessionActive ? "Follow the green arrow to your coach" : "Tap START AR to launch camera"}
                 </p>
             </div>
         </div>
