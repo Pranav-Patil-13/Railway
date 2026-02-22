@@ -249,12 +249,8 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
             {/* LIVE DATA HUD — Impressive Telemetry    */}
             {/* ═══════════════════════════════════════ */}
 
-            {/* Top Bar — Destination + Distance */}
-            <div className="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
-                <div className="bg-black/50 backdrop-blur-lg border border-cyan-500/30 px-3 py-2 rounded-lg text-white shadow-lg shadow-cyan-900/20">
-                    <h3 className="text-[9px] font-bold uppercase tracking-[2px] text-cyan-400">⬤ Destination</h3>
-                    <p className="text-base font-bold tracking-wide">{targetLabel}</p>
-                </div>
+            {/* Top Right — Distance only */}
+            <div className="absolute top-3 right-3 z-20 pointer-events-none">
                 <div className="bg-black/50 backdrop-blur-lg border border-indigo-500/30 px-3 py-2 rounded-lg text-white text-right shadow-lg shadow-indigo-900/20">
                     <h3 className="text-[9px] font-bold uppercase tracking-[2px] text-indigo-400">Distance</h3>
                     <p className="text-base font-bold">{distance}<span className="text-[10px] font-normal text-indigo-300 ml-1">m</span></p>
@@ -301,9 +297,17 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
                 </div>
             </div>
 
-            {/* Bottom Status Bar */}
-            <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-none">
-                <div className="bg-black/60 backdrop-blur-lg border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-between">
+            {/* Bottom — Destination Card + Status Bar */}
+            <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-none space-y-2">
+                {/* Destination Card — centered */}
+                <div className="flex justify-center">
+                    <div className="bg-black/60 backdrop-blur-lg border border-cyan-500/30 px-5 py-2.5 rounded-xl text-white shadow-lg shadow-cyan-900/20 text-center">
+                        <h3 className="text-[9px] font-bold uppercase tracking-[2px] text-cyan-400">⬤ Destination</h3>
+                        <p className="text-base font-bold tracking-wide">{targetLabel}</p>
+                    </div>
+                </div>
+                {/* Status Bar */}
+                <div className="bg-black/60 backdrop-blur-lg border border-white/10 rounded-xl px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                         <span className="text-[10px] font-mono text-green-400 uppercase tracking-widest">AR Active</span>
