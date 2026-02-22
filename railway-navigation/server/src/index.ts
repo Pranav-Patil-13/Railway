@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
+import { seedStationsIfEmpty } from './utils/seedData';
 import trainRoutes from './routes/trainRoutes';
 import stationRoutes from './routes/stationRoutes';
 import { errorHandler } from './middleware/errorHandler';
@@ -11,8 +12,12 @@ import { errorHandler } from './middleware/errorHandler';
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
+// Connect to database and seed data
+const init = async () => {
+    await connectDB();
+    await seedStationsIfEmpty();
+};
+init();
 
 console.log('--- Environment Check ---');
 console.log('Current Workdir:', process.cwd());
