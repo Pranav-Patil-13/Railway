@@ -313,11 +313,19 @@ export function Search() {
 
                                             <div className="mt-4 sm:mt-0 flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-border/50">
                                                 <div className="text-right">
-                                                    <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-none mb-1">Route</div>
+                                                    <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-none mb-1">
+                                                        {t.matchedRoute ? 'Searched Segment' : 'Route'}
+                                                    </div>
                                                     <div className="text-sm font-medium text-text-primary flex items-center gap-2">
-                                                        {t.source.split('(')[1]?.replace(')', '') || t.source}
+                                                        {t.matchedRoute
+                                                            ? t.matchedRoute.fromStation
+                                                            : (t.source.includes('(') ? t.source.split('(')[1]?.replace(')', '') : t.source)
+                                                        }
                                                         <ArrowRight className="h-3 w-3 text-text-secondary" />
-                                                        {t.destination.split('(')[1]?.replace(')', '') || t.destination}
+                                                        {t.matchedRoute
+                                                            ? t.matchedRoute.toStation
+                                                            : (t.destination.includes('(') ? t.destination.split('(')[1]?.replace(')', '') : t.destination)
+                                                        }
                                                     </div>
                                                 </div>
                                                 <div className="h-10 w-10 rounded-full bg-secondary/50 group-hover:bg-primary group-hover:text-white transition-all flex items-center justify-center">

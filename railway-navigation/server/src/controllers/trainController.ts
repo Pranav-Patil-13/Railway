@@ -165,8 +165,8 @@ export const searchRoutes = async (req: Request, res: Response, next: NextFuncti
                 matchedRoute: {
                     fromStopIndex,
                     toStopIndex,
-                    fromStation: fromStopIndex >= 0 ? stops[fromStopIndex] : null,
-                    toStation: toStopIndex >= 0 ? stops[toStopIndex] : null,
+                    fromStation: fromStopIndex >= 0 ? stops[fromStopIndex].stationCode : null,
+                    toStation: toStopIndex >= 0 ? stops[toStopIndex].stationCode : null,
                     stopsInBetween: (fromStopIndex >= 0 && toStopIndex >= 0)
                         ? toStopIndex - fromStopIndex - 1
                         : null,

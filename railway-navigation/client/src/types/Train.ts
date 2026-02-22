@@ -12,6 +12,13 @@ export interface ITrain {
     destination: string;
     runningDays: string[];
     stops: ITrainStop[];
+    matchedRoute?: {
+        fromStopIndex: number;
+        toStopIndex: number;
+        fromStation: string;
+        toStation: string;
+        stopsInBetween: number;
+    };
 }
 
 export interface ApiResponse<T> {
