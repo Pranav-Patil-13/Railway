@@ -61,8 +61,8 @@ export class ArrowRenderer {
         this.arrowGroup.add(tip);
         this.arrowGroup.add(glow);
 
-        // Large scale — clearly visible on screen
-        this.arrowGroup.scale.set(1.8, 1.8, 1.8);
+        // Proportionate for mobile screens
+        this.arrowGroup.scale.set(0.7, 0.7, 0.7);
         this.arrowGroup.visible = true;
 
         this.scene.add(this.arrowGroup);
