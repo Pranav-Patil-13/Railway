@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
 import { ArrowRenderer } from './ArrowRenderer';
 import { calculateDirection } from './DirectionCalculator';
 import type { Coordinate } from '../../types';
@@ -12,179 +11,168 @@ interface ARSessionManagerProps {
 }
 
 const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, targetLocation, targetLabel }) => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const overlayRef = useRef<HTMLDivElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLDivElement>(null);
     const [distance, setDistance] = useState<number>(0);
-    const [isSessionActive, setIsSessionActive] = useState(false);
-    const [xrSupported, setXrSupported] = useState<boolean | null>(null);
+    const [cameraReady, setCameraReady] = useState(false);
+    const [error, setError] = useState<string>('');
 
+    // Start camera feed
     useEffect(() => {
-        // Check for WebXR support first
-        if ('xr' in navigator) {
-            navigator.xr?.isSessionSupported('immersive-ar').then((supported) => {
-                setXrSupported(supported);
-            });
-        } else {
-            setXrSupported(false);
-        }
+        let stream: MediaStream | null = null;
 
-        if (!containerRef.current || xrSupported === false) return;
+        const startCamera = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: false,
+                });
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    videoRef.current.onloadedmetadata = () => {
+                        videoRef.current?.play();
+                        setCameraReady(true);
+                    };
+                }
+            } catch (err) {
+                console.error('Camera access error:', err);
+                setError('Camera access denied. Please allow camera permissions and reload.');
+            }
+        };
 
-        // 1. Setup Three.js Scene
+        startCamera();
+
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach((track) => track.stop());
+            }
+        };
+    }, []);
+
+    // Setup Three.js overlay
+    useEffect(() => {
+        if (!canvasRef.current || !cameraReady) return;
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // Scene
         const scene = new THREE.Scene();
 
-        // 2. Setup Camera
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+        // Camera
+        const camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 100);
+        camera.position.set(0, 1.5, 3);
+        camera.lookAt(0, 0.5, 0);
 
-        // 3. Setup Renderer
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        // Renderer with transparency
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true; // Enable WebXR
-        containerRef.current.appendChild(renderer.domElement);
+        renderer.setSize(width, height);
+        renderer.setClearColor(0x000000, 0); // fully transparent background
+        canvasRef.current.appendChild(renderer.domElement);
 
-        // 4. Add AR Button to document with DOM Overlay
-        const arButton = ARButton.createButton(renderer, {
-            requiredFeatures: ['hit-test'],
-            optionalFeatures: ['dom-overlay'],
-            domOverlay: { root: overlayRef.current || document.body }
-        });
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(2, 5, 3);
+        scene.add(dirLight);
 
-        // Add custom styling so it's visible before clicking
-        arButton.style.backgroundColor = 'rgba(79, 70, 229, 0.9)'; // indigo-600
-        arButton.style.padding = '16px 24px';
-        arButton.style.borderRadius = '12px';
-        arButton.style.fontWeight = 'bold';
-        arButton.style.letterSpacing = '1px';
-        arButton.style.bottom = '15%';
-
-        if (overlayRef.current) {
-            overlayRef.current.appendChild(arButton);
-        } else {
-            document.body.appendChild(arButton);
-        }
-
-        // Listen for session start/end to remove dark background
-        renderer.xr.addEventListener('sessionstart', () => setIsSessionActive(true));
-        renderer.xr.addEventListener('sessionend', () => setIsSessionActive(false));
-
-        // 5. Add Lights
-        const light = new THREE.AmbientLight(0xffffff, 1);
-        scene.add(light);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(0, 10, 0);
-        scene.add(directionalLight);
-
-        // 6. Initialize Arrow Renderer
+        // Arrow
         const arrow = new ArrowRenderer(scene);
 
-        // Calculate initial direction
-        const { angle, distance: initialDistance } = calculateDirection(currentLocation, targetLocation);
-        setDistance(Math.round(initialDistance));
+        // Calculate direction
+        const { angle, distance: dist } = calculateDirection(currentLocation, targetLocation);
+        setDistance(Math.round(dist));
 
-        // 7. Setup Animation Loop
-        renderer.setAnimationLoop((_, frame) => {
-            if (frame) {
-                // In a real sophisticated app, we'd use hit-testing to place the arrow on the floor.
-                // For MVP, we'll place it 1 meter in front of the camera, slightly below eye level.
+        // Place arrow in front of camera, at ground level
+        const arrowPosition = new THREE.Vector3(0, 0.3, 0);
+        arrow.setPosition(arrowPosition);
+        arrow.updateDirection(angle);
+        arrow.updateColor(dist);
 
-                const referenceSpace = renderer.xr.getReferenceSpace();
-                const session = renderer.xr.getSession();
-
-                if (session && referenceSpace) {
-                    const cameraPose = frame.getViewerPose(referenceSpace);
-                    if (cameraPose) {
-                        // Get camera position and rotation
-                        const camTransform = cameraPose.transform;
-                        const camPosition = new THREE.Vector3(
-                            camTransform.position.x,
-                            camTransform.position.y,
-                            camTransform.position.z
-                        );
-
-                        // Position arrow 1.5 meters in front of camera
-                        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(
-                            new THREE.Quaternion(camTransform.orientation.x, camTransform.orientation.y, camTransform.orientation.z, camTransform.orientation.w)
-                        );
-
-                        // We only want XZ forward, ignore pitch/roll for arrow placement
-                        forward.y = 0;
-                        forward.normalize();
-
-                        const arrowPos = camPosition.clone().add(forward.multiplyScalar(1.5));
-                        // Place it a bit low (ground level approach)
-                        arrowPos.y -= 0.5;
-
-                        arrow.setPosition(arrowPos);
-
-                        // Set the rotation towards the target
-                        arrow.updateDirection(angle);
-                        arrow.updateColor(initialDistance);
-                    }
-                }
-            }
+        // Animation with gentle floating effect
+        let time = 0;
+        const animate = () => {
+            time += 0.02;
+            // Gentle floating animation
+            arrowPosition.y = 0.3 + Math.sin(time) * 0.08;
+            arrow.setPosition(arrowPosition);
 
             renderer.render(scene, camera);
-        });
-
-        // Handle Resize
-        const onWindowResize = () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
         };
-        window.addEventListener('resize', onWindowResize);
+        renderer.setAnimationLoop(animate);
 
-        // Cleanup
+        // Resize handler
+        const handleResize = () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        };
+        window.addEventListener('resize', handleResize);
+
         return () => {
-            window.removeEventListener('resize', onWindowResize);
+            window.removeEventListener('resize', handleResize);
             renderer.setAnimationLoop(null);
             renderer.domElement.remove();
-            if (arButton.parentNode) {
-                arButton.parentNode.removeChild(arButton);
-            }
+            renderer.dispose();
         };
-    }, [currentLocation, targetLocation, xrSupported]);
+    }, [cameraReady, currentLocation, targetLocation]);
 
-    // Pre-session: show dark background so the white HUD and AR button are visible.
-    // In-session: background MUST be transparent for camera passthrough.
+    if (error) {
+        return (
+            <div className="w-full h-screen bg-slate-900 flex items-center justify-center p-6">
+                <div className="bg-red-50 text-red-600 p-6 rounded-2xl max-w-sm shadow-2xl border border-red-100 text-center">
+                    <h2 className="text-xl font-bold mb-2">Camera Error</h2>
+                    <p className="text-sm">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div
-            ref={overlayRef}
-            className={`relative w-full h-screen overflow-hidden ${isSessionActive ? 'bg-transparent' : 'bg-slate-900'} transition-colors duration-500`}
-        >
-            {/* The canvas container */}
-            <div ref={containerRef} className="absolute inset-0 z-0 bg-transparent pointer-events-none" />
+        <div className="relative w-full h-screen overflow-hidden bg-black">
+            {/* Camera Video Feed */}
+            <video
+                ref={videoRef}
+                playsInline
+                muted
+                autoPlay
+                className="absolute inset-0 w-full h-full object-cover z-0"
+            />
 
-            {/* Support Warning */}
-            {xrSupported === false && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-sm p-6 text-center">
-                    <div className="bg-red-50 text-red-600 p-6 rounded-2xl max-w-sm shadow-2xl border border-red-100">
-                        <h2 className="text-xl font-bold mb-2">WebXR Not Supported</h2>
-                        <p className="text-sm">
-                            Your browser or device does not support Augmented Reality. Please ensure you are using a compatible mobile device (Android with ARCore or iOS with WebXR Viewer) and the site is loaded over HTTPS.
-                        </p>
+            {/* Three.js Transparent Canvas Overlay */}
+            <div ref={canvasRef} className="absolute inset-0 z-10 pointer-events-none" />
+
+            {/* HUD Overlay */}
+            <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-start pointer-events-none">
+                <div className="bg-black/40 backdrop-blur-md border border-white/20 p-4 rounded-xl text-white shadow-xl shadow-black/30">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-300">Destination</h3>
+                    <p className="text-lg font-bold">{targetLabel}</p>
+                </div>
+
+                <div className="bg-indigo-600/80 backdrop-blur-md p-4 rounded-xl text-white text-right shadow-xl shadow-indigo-900/30">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Distance</h3>
+                    <p className="text-lg font-bold">{distance} <span className="text-xs font-normal">meters</span></p>
+                </div>
+            </div>
+
+            {/* Loading indicator */}
+            {!cameraReady && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-900">
+                    <div className="text-center text-white space-y-4">
+                        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-sm text-slate-400">Starting camera...</p>
                     </div>
                 </div>
             )}
 
-            {/* HUD Overlay */}
-            <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl text-white shadow-xl shadow-black/20">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-indigo-300">Destination</h3>
-                    <p className="text-2xl font-bold">{targetLabel}</p>
-                </div>
-
-                <div className="bg-indigo-600/80 backdrop-blur-md p-4 rounded-xl text-white text-right shadow-xl shadow-indigo-900/20">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-indigo-200">Distance</h3>
-                    <p className="text-2xl font-bold">{distance} <span className="text-sm font-normal">meters</span></p>
-                </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="absolute bottom-8 left-0 right-0 z-10 text-center pointer-events-none">
+            {/* Bottom instruction */}
+            <div className="absolute bottom-8 left-0 right-0 z-20 text-center pointer-events-none">
                 <p className="text-white/90 bg-black/60 backdrop-blur-md inline-block px-5 py-3 rounded-full text-sm font-medium border border-white/10 shadow-lg">
-                    {isSessionActive ? "Follow the green arrow to your coach" : "Tap START AR to launch camera"}
+                    Follow the green arrow to your coach
                 </p>
             </div>
         </div>

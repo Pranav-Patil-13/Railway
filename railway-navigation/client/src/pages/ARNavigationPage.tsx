@@ -61,18 +61,18 @@ const ARNavigationPage: React.FC = () => {
     };
 
     if (scannedLocation && targetLocation) {
-        // We have both coordinates; start the AR WebXR Session
+        // We have both coordinates; start the AR camera session
         return (
-            <div className="w-full h-screen overflow-hidden bg-transparent text-white">
+            <div className="w-full h-screen overflow-hidden relative">
                 <button
                     onClick={() => {
                         // Resets state back to scanner
                         setScannedLocation(null);
                         setTargetLocation(null);
                     }}
-                    className="absolute z-50 top-6 left-6 bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full transition-colors"
+                    className="absolute z-50 top-6 left-6 bg-black/40 hover:bg-black/60 backdrop-blur-md p-2 rounded-full transition-colors"
                 >
-                    <ArrowLeft className="w-6 h-6 shrink-0" />
+                    <ArrowLeft className="w-6 h-6 shrink-0 text-white" />
                 </button>
                 <ARSessionManager
                     currentLocation={scannedLocation}
