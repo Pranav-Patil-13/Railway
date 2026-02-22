@@ -22,6 +22,9 @@ export function Navbar() {
                         <a href="/search" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
                             Search Trains
                         </a>
+                        <a href="/ar-navigate" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                            AR Navigation
+                        </a>
                         <div className="h-4 w-px bg-border" />
                         <a
                             href="https://github.com"

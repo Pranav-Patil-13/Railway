@@ -2,7 +2,7 @@ import { Container, PageWrapper } from '../components/Layout';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '../components/Card';
-import { Search, Map, Clock } from 'lucide-react';
+import { Search, Map, Clock, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RouteExplorer } from '../components/RouteExplorer';
 import { useRef } from 'react';
@@ -36,6 +36,15 @@ export function Home() {
                                     Search Trains Now
                                 </Button>
                             </Link>
+                            <Link to="/ar-navigate">
+                                <Button
+                                    size="lg"
+                                    className="w-full sm:w-auto text-base h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                >
+                                    <Navigation className="mr-2 h-5 w-5" />
+                                    Launch AR Nav
+                                </Button>
+                            </Link>
                             <Button
                                 size="lg"
                                 variant="outline"
@@ -59,7 +68,7 @@ export function Home() {
             {/* Features Grid */}
             <section className="py-16 -mt-16">
                 <Container>
-                    <div className="grid gap-6 md:grid-cols-3">
+                    <div className="grid gap-6 md:grid-cols-4">
                         <Card className="shadow-lg hover:shadow-xl transition-shadow bg-surface/80 backdrop-blur border-t-primary">
                             <CardHeader>
                                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary">
@@ -89,6 +98,18 @@ export function Home() {
                                 <CardDescription>Architecture built to seamlessly integrate WebSocket live-tracking in the future.</CardDescription>
                             </CardHeader>
                         </Card>
+
+                        <Link to="/ar-navigate" className="block h-full">
+                            <Card className="h-full shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur border-t-indigo-500 cursor-pointer group">
+                                <CardHeader>
+                                    <div className="h-12 w-12 rounded-lg bg-indigo-500/20 flex items-center justify-center mb-4 text-indigo-600 group-hover:scale-110 transition-transform">
+                                        <Navigation className="h-6 w-6" />
+                                    </div>
+                                    <CardTitle className="text-indigo-900">AR Indoor Navigation</CardTitle>
+                                    <CardDescription>Scan QR codes at stations to unlock immersive 3D routing to your exact coach instantly.</CardDescription>
+                                </CardHeader>
+                            </Card>
+                        </Link>
                     </div>
                 </Container>
             </section>

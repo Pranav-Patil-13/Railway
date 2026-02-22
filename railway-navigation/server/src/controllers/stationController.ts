@@ -50,3 +50,28 @@ export const searchStations = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
+
+// GET /api/stations/:code
+// Returns a specific station by its code, including coordinate locations if available
+export const getStationByCode = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { code } = req.params;
+
+        if (!code || typeof code !== 'string') {
+            return res.status(400).json({ success: false, message: 'Invalid station code' });
+        }
+
+        const station = await Station.findOne({ code: code.toUpperCase() }).lean();
+
+        if (!station) {
+            return res.status(404).json({ success: false, message: 'Station not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: station,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
