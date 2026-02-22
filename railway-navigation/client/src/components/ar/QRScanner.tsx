@@ -36,17 +36,21 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError }) => {
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
 
                 if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
-                    // play() will be handled by autoPlay prop, 
-                    // but we call it explicitly just in case.
-                    try {
-                        await videoRef.current.play();
-                        setCameraActive(true);
-                        requestAnimationFrame(tick);
-                    } catch (playError) {
-                        console.error("Video play failed:", playError);
-                        // Often happens if not muted or no user gesture
-                    }
+                    const video = videoRef.current;
+                    video.srcObject = stream;
+
+                    // Wait for video metadata to load before playing
+                    video.onloadedmetadata = () => {
+                        video.play().then(() => {
+                            setCameraActive(true);
+                            requestAnimationFrame(tick);
+                        }).catch((playError) => {
+                            console.error("Video play failed:", playError);
+                            // Fallback: still mark camera active since stream is attached
+                            setCameraActive(true);
+                            requestAnimationFrame(tick);
+                        });
+                    };
                 }
             } catch (err: any) {
                 console.error("Error accessing camera:", err);
