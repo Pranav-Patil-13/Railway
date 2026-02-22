@@ -16,6 +16,7 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
     const [distance, setDistance] = useState<number>(0);
     const [cameraReady, setCameraReady] = useState(false);
     const [error, setError] = useState<string>('');
+    const [orientationPermission, setOrientationPermission] = useState<'granted' | 'denied' | 'pending'>('pending');
 
     // Start camera feed
     useEffect(() => {
@@ -49,9 +50,37 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
         };
     }, []);
 
-    // Setup Three.js overlay
+    // Request DeviceOrientation permission (required on iOS 13+)
+    const requestOrientationPermission = async () => {
+        const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as {
+            requestPermission?: () => Promise<'granted' | 'denied'>;
+        };
+        if (typeof DeviceOrientationEventTyped.requestPermission === 'function') {
+            try {
+                const result = await DeviceOrientationEventTyped.requestPermission();
+                setOrientationPermission(result);
+            } catch {
+                setOrientationPermission('denied');
+            }
+        } else {
+            // Android and other browsers don't need explicit permission
+            setOrientationPermission('granted');
+        }
+    };
+
+    // Auto-request permission on mount (works on Android, needs button tap on iOS)
     useEffect(() => {
-        if (!canvasRef.current || !cameraReady) return;
+        const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as {
+            requestPermission?: () => Promise<'granted' | 'denied'>;
+        };
+        if (typeof DeviceOrientationEventTyped.requestPermission !== 'function') {
+            setOrientationPermission('granted');
+        }
+    }, []);
+
+    // Setup Three.js overlay with device orientation
+    useEffect(() => {
+        if (!canvasRef.current || !cameraReady || orientationPermission !== 'granted') return;
 
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -59,16 +88,14 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
         // Scene
         const scene = new THREE.Scene();
 
-        // Camera
+        // Camera - positioned at origin, orientation will be controlled by device
         const camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 100);
-        camera.position.set(0, 1.5, 3);
-        camera.lookAt(0, 0.5, 0);
 
         // Renderer with transparency
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(width, height);
-        renderer.setClearColor(0x000000, 0); // fully transparent background
+        renderer.setClearColor(0x000000, 0);
         canvasRef.current.appendChild(renderer.domElement);
 
         // Lights
@@ -81,23 +108,55 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
         // Arrow
         const arrow = new ArrowRenderer(scene);
 
-        // Calculate direction
+        // Calculate direction to target
         const { angle, distance: dist } = calculateDirection(currentLocation, targetLocation);
         setDistance(Math.round(dist));
 
-        // Place arrow in front of camera, at ground level
-        const arrowPosition = new THREE.Vector3(0, 0.3, 0);
+        // Place arrow at world-space position based on target angle
+        // The arrow sits at a fixed position in the world; the camera rotates around it
+        const arrowDistance = 2; // meters in front
+        const arrowX = Math.sin(angle) * arrowDistance;
+        const arrowZ = -Math.cos(angle) * arrowDistance;
+        const arrowPosition = new THREE.Vector3(arrowX, -0.5, arrowZ);
         arrow.setPosition(arrowPosition);
         arrow.updateDirection(angle);
         arrow.updateColor(dist);
 
-        // Animation with gentle floating effect
+        // Device orientation tracking
+        let deviceAlpha = 0;  // compass heading (0-360)
+        let deviceBeta = 90;  // front-back tilt (-180 to 180)
+        let deviceGamma = 0;  // left-right tilt (-90 to 90)
+
+        const handleOrientation = (event: DeviceOrientationEvent) => {
+            if (event.alpha !== null) deviceAlpha = event.alpha;
+            if (event.beta !== null) deviceBeta = event.beta;
+            if (event.gamma !== null) deviceGamma = event.gamma;
+        };
+
+        window.addEventListener('deviceorientation', handleOrientation, true);
+
+        // Animation loop
         let time = 0;
         const animate = () => {
             time += 0.02;
-            // Gentle floating animation
-            arrowPosition.y = 0.3 + Math.sin(time) * 0.08;
-            arrow.setPosition(arrowPosition);
+
+            // Convert device orientation to camera rotation
+            // Phone held upright in portrait mode:
+            // alpha = compass heading, beta = tilt forward/back, gamma = tilt left/right
+            const alphaRad = THREE.MathUtils.degToRad(deviceAlpha);
+            const betaRad = THREE.MathUtils.degToRad(deviceBeta);
+            const gammaRad = THREE.MathUtils.degToRad(deviceGamma);
+
+            // Create rotation from device orientation
+            // Standard ZXY Euler order for device orientation
+            const euler = new THREE.Euler();
+            euler.set(betaRad - Math.PI / 2, alphaRad, -gammaRad, 'YXZ');
+
+            camera.quaternion.setFromEuler(euler);
+
+            // Gentle floating animation for arrow
+            const floatingY = -0.5 + Math.sin(time) * 0.08;
+            arrow.setPosition(new THREE.Vector3(arrowX, floatingY, arrowZ));
 
             renderer.render(scene, camera);
         };
@@ -115,11 +174,12 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
 
         return () => {
             window.removeEventListener('resize', handleResize);
+            window.removeEventListener('deviceorientation', handleOrientation, true);
             renderer.setAnimationLoop(null);
             renderer.domElement.remove();
             renderer.dispose();
         };
-    }, [cameraReady, currentLocation, targetLocation]);
+    }, [cameraReady, currentLocation, targetLocation, orientationPermission]);
 
     if (error) {
         return (
@@ -159,6 +219,24 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
                 </div>
             </div>
 
+            {/* iOS Permission Button */}
+            {orientationPermission === 'pending' && cameraReady && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="text-center space-y-4 p-6">
+                        <p className="text-white text-lg font-semibold">Enable Motion Sensors</p>
+                        <p className="text-white/70 text-sm max-w-[280px]">
+                            Allow motion access so the AR arrow moves with your phone.
+                        </p>
+                        <button
+                            onClick={requestOrientationPermission}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-xl shadow-indigo-900/40 transition-colors"
+                        >
+                            Enable Motion
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Loading indicator */}
             {!cameraReady && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-900">
@@ -172,7 +250,7 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
             {/* Bottom instruction */}
             <div className="absolute bottom-8 left-0 right-0 z-20 text-center pointer-events-none">
                 <p className="text-white/90 bg-black/60 backdrop-blur-md inline-block px-5 py-3 rounded-full text-sm font-medium border border-white/10 shadow-lg">
-                    Follow the green arrow to your coach
+                    Point your phone around — follow the green arrow to your coach
                 </p>
             </div>
         </div>
