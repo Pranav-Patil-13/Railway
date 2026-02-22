@@ -10,6 +10,13 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isScanning, setIsScanning] = useState(true);
+    const [cameraActive, setCameraActive] = useState(false);
+    const isScanningRef = useRef(true);
+
+    // Keep ref in sync
+    useEffect(() => {
+        isScanningRef.current = isScanning;
+    }, [isScanning]);
 
     useEffect(() => {
         let stream: MediaStream | null = null;
@@ -17,28 +24,45 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError }) => {
 
         const startCamera = async () => {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                // More explicit constraints for mobile browsers
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
-                    videoRef.current.setAttribute('playsinline', 'true'); // required to tell iOS safari we don't want fullscreen
-                    videoRef.current.play();
-                    requestAnimationFrame(tick);
+                    // play() will be handled by autoPlay prop, 
+                    // but we call it explicitly just in case.
+                    try {
+                        await videoRef.current.play();
+                        setCameraActive(true);
+                        requestAnimationFrame(tick);
+                    } catch (playError) {
+                        console.error("Video play failed:", playError);
+                        // Often happens if not muted or no user gesture
+                    }
                 }
             } catch (err: any) {
                 console.error("Error accessing camera:", err);
-                if (onError) onError("Failed to access camera. Please ensure permissions are granted.");
+                if (onError) onError("Failed to access camera. Please check permissions.");
             }
         };
 
         const tick = () => {
-            if (!isScanning) return;
+            if (!isScanningRef.current) return;
 
             if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA && canvasRef.current) {
                 const canvas = canvasRef.current;
                 const video = videoRef.current;
                 canvas.height = video.videoHeight;
                 canvas.width = video.videoWidth;
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
                 if (ctx) {
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -51,6 +75,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError }) => {
                         try {
                             const parsedData = JSON.parse(code.data);
                             if (parsedData.station_id && parsedData.location_id) {
+                                isScanningRef.current = false;
                                 setIsScanning(false);
                                 onScan({
                                     station_id: parsedData.station_id,
@@ -59,7 +84,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError }) => {
                                 return; // Stop scanning
                             }
                         } catch (e) {
-                            console.warn("QR code found, but it's not valid JSON or missing fields.", code.data);
+                            // Suppress JSON errors for non-matching QR codes
                         }
                     }
                 }
@@ -77,15 +102,26 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError }) => {
                 cancelAnimationFrame(animationFrameId);
             }
         };
-    }, [isScanning, onScan, onError]);
+    }, [onScan, onError]); // Removed isScanning from deps to avoid camera restarts
 
     return (
-        <div className="relative w-full max-w-md mx-auto aspect-square overflow-hidden rounded-xl border-4 border-indigo-500 shadow-2xl">
-            <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="relative w-full max-w-md mx-auto aspect-square overflow-hidden rounded-xl border-4 border-indigo-500 shadow-2xl bg-black">
+            {!cameraActive && isScanning && (
+                <div className="absolute inset-0 flex items-center justify-center z-20 bg-slate-900">
+                    <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            )}
+            <video
+                ref={videoRef}
+                className="absolute inset-0 w-full h-full object-cover"
+                playsInline
+                muted
+                autoPlay
+            />
             <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 border-2 border-white/50 border-dashed m-12 rounded-lg pointer-events-none" />
-            <div className="absolute inset-x-0 bottom-4 text-center">
-                <span className="bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium">
+            <div className="absolute inset-x-0 bottom-4 text-center z-10">
+                <span className="bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium">
                     {isScanning ? 'Scan Station QR Code' : 'QR Detected!'}
                 </span>
             </div>

@@ -19,7 +19,7 @@ const ARNavigationPage: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
 
-    const handleQRScan = async (data: { station_id: string; location_id: string }) => {
+    const handleQRScan = React.useCallback(async (data: { station_id: string; location_id: string }) => {
         setLoading(true);
         setError('');
 
@@ -58,7 +58,11 @@ const ARNavigationPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [targetCoachIdentifier]);
+
+    const handleScannerError = React.useCallback((err: string) => {
+        setError(err);
+    }, []);
 
     if (scannedLocation && targetLocation) {
         // We have both coordinates; start the AR camera session
@@ -134,7 +138,7 @@ const ARNavigationPage: React.FC = () => {
                         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : (
-                    <QRScanner onScan={handleQRScan} onError={(err) => setError(err)} />
+                    <QRScanner onScan={handleQRScan} onError={handleScannerError} />
                 )}
             </div>
         </div>
