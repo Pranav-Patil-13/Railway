@@ -156,6 +156,18 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
             {/* The canvas container */}
             <div ref={containerRef} className="absolute inset-0 z-0 bg-transparent pointer-events-none" />
 
+            {/* Support Warning */}
+            {xrSupported === false && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-sm p-6 text-center">
+                    <div className="bg-red-50 text-red-600 p-6 rounded-2xl max-w-sm shadow-2xl border border-red-100">
+                        <h2 className="text-xl font-bold mb-2">WebXR Not Supported</h2>
+                        <p className="text-sm">
+                            Your browser or device does not support Augmented Reality. Please ensure you are using a compatible mobile device (Android with ARCore or iOS with WebXR Viewer) and the site is loaded over HTTPS.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* HUD Overlay */}
             <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl text-white shadow-xl shadow-black/20">
