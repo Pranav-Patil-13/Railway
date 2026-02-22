@@ -63,12 +63,11 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
                 setOrientationPermission('denied');
             }
         } else {
-            // Android and other browsers don't need explicit permission
             setOrientationPermission('granted');
         }
     };
 
-    // Auto-request permission on mount (works on Android, needs button tap on iOS)
+    // Auto-grant on Android (no permission API needed)
     useEffect(() => {
         const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as {
             requestPermission?: () => Promise<'granted' | 'denied'>;
@@ -88,8 +87,10 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
         // Scene
         const scene = new THREE.Scene();
 
-        // Camera - positioned at origin, orientation will be controlled by device
+        // Camera looking straight at the arrow
         const camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 100);
+        camera.position.set(0, 0, 4);
+        camera.lookAt(0, 0, 0);
 
         // Renderer with transparency
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -99,38 +100,31 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
         canvasRef.current.appendChild(renderer.domElement);
 
         // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-        scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2);
         dirLight.position.set(2, 5, 3);
         scene.add(dirLight);
+        // Add a point light near the arrow for extra glow
+        const pointLight = new THREE.PointLight(0x00ff66, 2, 10);
+        pointLight.position.set(0, 0, 1);
+        scene.add(pointLight);
 
-        // Arrow
+        // Arrow — always at center of scene
         const arrow = new ArrowRenderer(scene);
+        arrow.setPosition(new THREE.Vector3(0, -0.3, 0));
 
-        // Calculate direction to target
-        const { angle, distance: dist } = calculateDirection(currentLocation, targetLocation);
+        // Calculate target direction angle
+        const { angle: targetAngle, distance: dist } = calculateDirection(currentLocation, targetLocation);
         setDistance(Math.round(dist));
-
-        // Place arrow at world-space position based on target angle
-        // The arrow sits at a fixed position in the world; the camera rotates around it
-        const arrowDistance = 2; // meters in front
-        const arrowX = Math.sin(angle) * arrowDistance;
-        const arrowZ = -Math.cos(angle) * arrowDistance;
-        const arrowPosition = new THREE.Vector3(arrowX, -0.5, arrowZ);
-        arrow.setPosition(arrowPosition);
-        arrow.updateDirection(angle);
         arrow.updateColor(dist);
 
-        // Device orientation tracking
-        let deviceAlpha = 0;  // compass heading (0-360)
-        let deviceBeta = 90;  // front-back tilt (-180 to 180)
-        let deviceGamma = 0;  // left-right tilt (-90 to 90)
+        // Device compass heading
+        let compassHeading = 0;
 
         const handleOrientation = (event: DeviceOrientationEvent) => {
-            if (event.alpha !== null) deviceAlpha = event.alpha;
-            if (event.beta !== null) deviceBeta = event.beta;
-            if (event.gamma !== null) deviceGamma = event.gamma;
+            if (event.alpha !== null) {
+                compassHeading = event.alpha; // 0-360 degrees, 0 = North
+            }
         };
 
         window.addEventListener('deviceorientation', handleOrientation, true);
@@ -140,29 +134,26 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
         const animate = () => {
             time += 0.02;
 
-            // Convert device orientation to camera rotation
-            // Phone held upright in portrait mode:
-            // alpha = compass heading, beta = tilt forward/back, gamma = tilt left/right
-            const alphaRad = THREE.MathUtils.degToRad(deviceAlpha);
-            const betaRad = THREE.MathUtils.degToRad(deviceBeta);
-            const gammaRad = THREE.MathUtils.degToRad(deviceGamma);
+            // The arrow always stays centered on screen.
+            // We rotate it so it points toward the target relative to the phone's compass heading.
+            //
+            // targetAngle = the fixed angle from current position to target (in world coordinates)
+            // compassHeading = where the phone is currently pointing (0 = North)
+            //
+            // The difference tells us which direction the arrow should point on screen.
+            const compassRad = THREE.MathUtils.degToRad(compassHeading);
+            const relativeAngle = targetAngle - compassRad;
 
-            // Create rotation from device orientation
-            // Standard ZXY Euler order for device orientation
-            const euler = new THREE.Euler();
-            euler.set(betaRad - Math.PI / 2, alphaRad, -gammaRad, 'YXZ');
+            arrow.updateDirection(relativeAngle);
 
-            camera.quaternion.setFromEuler(euler);
-
-            // Gentle floating animation for arrow
-            const floatingY = -0.5 + Math.sin(time) * 0.08;
-            arrow.setPosition(new THREE.Vector3(arrowX, floatingY, arrowZ));
+            // Gentle floating
+            arrow.setPosition(new THREE.Vector3(0, -0.3 + Math.sin(time) * 0.1, 0));
 
             renderer.render(scene, camera);
         };
         renderer.setAnimationLoop(animate);
 
-        // Resize handler
+        // Resize
         const handleResize = () => {
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -250,7 +241,7 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
             {/* Bottom instruction */}
             <div className="absolute bottom-8 left-0 right-0 z-20 text-center pointer-events-none">
                 <p className="text-white/90 bg-black/60 backdrop-blur-md inline-block px-5 py-3 rounded-full text-sm font-medium border border-white/10 shadow-lg">
-                    Point your phone around — follow the green arrow to your coach
+                    Rotate your phone — the arrow points to your coach
                 </p>
             </div>
         </div>
