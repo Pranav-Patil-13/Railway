@@ -116,9 +116,9 @@ const ARSessionManager: React.FC<ARSessionManagerProps> = ({ currentLocation, ta
     }, [currentLocation, targetLocation]);
 
     return (
-        <div className="relative w-full h-screen overflow-hidden bg-black/90">
+        <div className="relative w-full h-screen overflow-hidden bg-transparent">
             {/* The canvas container */}
-            <div ref={containerRef} className="absolute inset-0 z-0" />
+            <div ref={containerRef} className="absolute inset-0 z-0 bg-transparent" />
 
             {/* HUD Overlay */}
             <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
