@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import { seedStationsIfEmpty } from './utils/seedData';
+import { seedARLocations } from './utils/seedARLocations';
 import trainRoutes from './routes/trainRoutes';
 import stationRoutes from './routes/stationRoutes';
 import { errorHandler } from './middleware/errorHandler';
@@ -16,6 +17,13 @@ dotenv.config();
 const init = async () => {
     await connectDB();
     await seedStationsIfEmpty();
+
+    // Auto-seed AR mapping for NASHIK01 test station on boot
+    try {
+        await seedARLocations();
+    } catch (e) {
+        console.error('Failed to auto-seed AR locations', e);
+    }
 };
 init();
 
