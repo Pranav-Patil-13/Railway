@@ -1,119 +1,177 @@
+import { useState, useEffect } from 'react';
 import { Container, PageWrapper } from '../components/Layout';
 import { Navbar } from '../components/Navbar';
-import { Button } from '../components/Button';
-import { Card, CardDescription, CardHeader, CardTitle } from '../components/Card';
 import { Search, Map, Clock, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RouteExplorer } from '../components/RouteExplorer';
-import { useRef } from 'react';
+import { Footer } from '../components/Footer';
+import train1 from '../assets/train1.jpg';
 
 export function Home() {
-    const explorerRef = useRef<HTMLDivElement>(null);
+    const [scrollY, setScrollY] = useState(0);
 
-    const scrollToExplorer = () => {
-        explorerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    };
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrollY(window.scrollY);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
         <PageWrapper>
             <Navbar />
 
             {/* Hero Section */}
-            <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-surface to-secondary/30 pt-16 md:pt-24 pb-32">
-                <Container>
-                    <div className="mx-auto max-w-4xl text-center">
-                        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl text-text-primary mb-6">
-                            Next-Generation <br className="hidden sm:block" />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Railway Navigation</span>
+            <section className="relative min-h-[85vh] sm:min-h-[90vh] flex flex-col justify-end pb-8 pt-32 lg:pb-16 lg:pt-40 bg-slate-900">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                    <img
+                        src={train1}
+                        alt="Indian Railways background"
+                        className="w-full h-full object-cover animate-slow-fade"
+                        style={{
+                            transform: `scale(1.2) translateY(${scrollY * 0.4}px)`,
+                            willChange: 'transform'
+                        }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/80"></div>
+                </div>
+
+                <Container className="relative z-10 w-full mb-8 sm:mb-12 mt-auto">
+                    <div className="max-w-4xl px-4 sm:px-0">
+                        <div className="flex flex-wrap items-center gap-3 text-white/60 font-black tracking-[0.3em] text-[10px] sm:text-xs mb-6 uppercase">
+                            <span className="px-2 py-1 bg-white/10 backdrop-blur-md rounded border border-white/10">Safety</span>
+                            <span className="px-2 py-1 bg-white/10 backdrop-blur-md rounded border border-white/10">Security</span>
+                            <span className="px-2 py-1 bg-white/10 backdrop-blur-md rounded border border-white/10">Punctuality</span>
+                        </div>
+                        <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white mb-6 drop-shadow-2xl tracking-tighter leading-[0.9] text-stroke-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+                            Indian Railways
                         </h1>
-                        <p className="mx-auto max-w-2xl text-lg sm:text-xl text-text-secondary mb-10">
-                            Track trains, view live schedules, and explore routes with our blazingly fast and highly accurate dashboard platform.
+                        <p className="max-w-2xl text-lg sm:text-2xl text-white/80 font-medium drop-shadow-lg leading-relaxed hidden sm:block border-l-4 border-primary pl-6">
+                            Heartily enjoy every journey through our boundless hospitality.<br />
+                            <span className="text-white/60 text-sm font-bold uppercase tracking-widest mt-2 block">The Lifeline of the Nation</span>
                         </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Link to="/search">
-                                <Button size="lg" className="w-full sm:w-auto text-base h-12 px-8">
-                                    <Search className="mr-2 h-5 w-5" />
-                                    Search Trains Now
-                                </Button>
-                            </Link>
-                            <Link to="/ar-navigate">
-                                <Button
-                                    size="lg"
-                                    className="w-full sm:w-auto text-base h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white"
-                                >
-                                    <Navigation className="mr-2 h-5 w-5" />
-                                    Launch AR Nav
-                                </Button>
-                            </Link>
-                            <Button
-                                size="lg"
-                                variant="outline"
-                                className="w-full sm:w-auto text-base h-12 px-8"
-                                onClick={scrollToExplorer}
-                            >
-                                Explore Routes
-                            </Button>
+                    </div>
+                </Container>
+
+                {/* Route Explorer Widget pushed to the bottom of the hero */}
+                <div className="relative z-20 w-full">
+                    <Container>
+                        <RouteExplorer className="-mb-24 sm:-mb-32 translate-y-8 sm:translate-y-16" />
+                    </Container>
+                </div>
+            </section>
+
+            {/* Features Grid spacer since RouteExplorer overlaps */}
+            <div className="h-20 sm:h-24"></div>
+
+            {/* Core Capabilities Section */}
+            <section className="py-24 bg-slate-50">
+                <Container>
+                    <div className="text-center max-w-4xl mx-auto mb-20">
+                        <div className="inline-flex items-center gap-4 mb-6">
+                            <div className="h-px w-10 bg-primary/30"></div>
+                            <h2 className="text-[10px] sm:text-xs font-black text-primary uppercase tracking-[0.5em]">Core Capabilities</h2>
+                            <div className="h-px w-10 bg-primary/30"></div>
+                        </div>
+                        <h3 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[1.1] mb-8">
+                            Everything you need for a <br className="hidden md:block" />
+                            <span className="relative">
+                                <span className="relative z-10 text-primary italic">smarter</span>
+                                <span className="absolute bottom-2 left-0 w-full h-4 bg-primary/10 -rotate-1"></span>
+                            </span> journey.
+                        </h3>
+                        <p className="text-slate-500 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto font-medium">
+                            Our platform combines cutting-edge technology with the reliability of Indian Railways to provide a world-class travel companion.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+                        {[
+                            {
+                                icon: Search,
+                                title: "Lightning Search",
+                                desc: "Find any train in milliseconds using our globally distributed indexing engine.",
+                                color: "blue"
+                            },
+                            {
+                                icon: Map,
+                                title: "Smart Routes",
+                                desc: "Visualize your entire journey from source to destination with all intermediate stops.",
+                                color: "indigo"
+                            },
+                            {
+                                icon: Clock,
+                                title: "Real-Time Precision",
+                                desc: "Stay updated with live arrivals, departures, and platform announcements.",
+                                color: "emerald"
+                            },
+                            {
+                                icon: Navigation,
+                                title: "AR Navigation",
+                                desc: "Immersive 3D wayfinding at stations to guide you directly to your coach.",
+                                color: "purple",
+                                link: "/ar-navigate"
+                            }
+                        ].map((feature, i) => {
+                            const colorMap: Record<string, string> = {
+                                blue: 'bg-blue-500/10 text-blue-600',
+                                indigo: 'bg-indigo-500/10 text-indigo-600',
+                                emerald: 'bg-emerald-500/10 text-emerald-600',
+                                purple: 'bg-purple-500/10 text-purple-600'
+                            };
+
+                            return (
+                                <div key={i} className="group relative p-8 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
+                                    <div className={`h-14 w-14 rounded-2xl ${colorMap[feature.color]} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
+                                        <feature.icon className="h-7 w-7" />
+                                    </div>
+                                    <h4 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h4>
+                                    <p className="text-slate-500 leading-relaxed text-sm mb-6">{feature.desc}</p>
+                                    {feature.link && (
+                                        <Link to={feature.link} className="inline-flex items-center text-primary font-bold text-sm hover:gap-2 transition-all">
+                                            Try it now <Navigation className="h-4 w-4 ml-1 rotate-45" />
+                                        </Link>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </Container>
+            </section>
+
+            {/* Stats Banner Section */}
+            <section className="py-20 bg-primary relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M0 50 Q 25 40 50 50 T 100 50" fill="none" stroke="white" strokeWidth="0.5" />
+                        <path d="M0 60 Q 25 50 50 60 T 100 60" fill="none" stroke="white" strokeWidth="0.5" />
+                    </svg>
+                </div>
+                <Container className="relative z-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center text-white">
+                        <div className="space-y-2">
+                            <div className="text-5xl font-black italic">13k+</div>
+                            <div className="text-white/60 font-bold uppercase tracking-widest text-xs">Active Trains</div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="text-5xl font-black italic">7k+</div>
+                            <div className="text-white/60 font-bold uppercase tracking-widest text-xs">Stations Mapped</div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="text-5xl font-black italic">2.5M</div>
+                            <div className="text-white/60 font-bold uppercase tracking-widest text-xs">Daily Users</div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="text-5xl font-black italic">99%</div>
+                            <div className="text-white/60 font-bold uppercase tracking-widest text-xs">Uptime Ready</div>
                         </div>
                     </div>
                 </Container>
             </section>
 
-            {/* Route Explorer Section */}
-            <div ref={explorerRef}>
-                <Container>
-                    <RouteExplorer className="-mt-12" />
-                </Container>
-            </div>
-
-            {/* Features Grid */}
-            <section className="py-16 -mt-16">
-                <Container>
-                    <div className="grid gap-6 md:grid-cols-4">
-                        <Card className="shadow-lg hover:shadow-xl transition-shadow bg-surface/80 backdrop-blur border-t-primary">
-                            <CardHeader>
-                                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary">
-                                    <Search className="h-6 w-6" />
-                                </div>
-                                <CardTitle>Lightning Fast Search</CardTitle>
-                                <CardDescription>Find any train by number or name instantly using our optimized text indexing engine.</CardDescription>
-                            </CardHeader>
-                        </Card>
-
-                        <Card className="shadow-lg hover:shadow-xl transition-shadow bg-surface/80 backdrop-blur border-t-accent">
-                            <CardHeader>
-                                <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4 text-accent">
-                                    <Map className="h-6 w-6" />
-                                </div>
-                                <CardTitle>Route Visualization</CardTitle>
-                                <CardDescription>Clearly breakdown source, destination, and intermediate stops intuitively.</CardDescription>
-                            </CardHeader>
-                        </Card>
-
-                        <Card className="shadow-lg hover:shadow-xl transition-shadow bg-surface/80 backdrop-blur border-t-success">
-                            <CardHeader>
-                                <div className="h-12 w-12 rounded-lg bg-success/10 flex items-center justify-center mb-4 text-success">
-                                    <Clock className="h-6 w-6" />
-                                </div>
-                                <CardTitle>Real-Time Ready</CardTitle>
-                                <CardDescription>Architecture built to seamlessly integrate WebSocket live-tracking in the future.</CardDescription>
-                            </CardHeader>
-                        </Card>
-
-                        <Link to="/ar-navigate" className="block h-full">
-                            <Card className="h-full shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur border-t-indigo-500 cursor-pointer group">
-                                <CardHeader>
-                                    <div className="h-12 w-12 rounded-lg bg-indigo-500/20 flex items-center justify-center mb-4 text-indigo-600 group-hover:scale-110 transition-transform">
-                                        <Navigation className="h-6 w-6" />
-                                    </div>
-                                    <CardTitle className="text-indigo-900">AR Indoor Navigation</CardTitle>
-                                    <CardDescription>Scan QR codes at stations to unlock immersive 3D routing to your exact coach instantly.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </Link>
-                    </div>
-                </Container>
-            </section>
-
+            <Footer />
         </PageWrapper>
     );
 }

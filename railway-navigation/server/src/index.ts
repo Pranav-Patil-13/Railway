@@ -8,6 +8,7 @@ import { seedStationsIfEmpty } from './utils/seedData';
 import { seedARLocations } from './utils/seedARLocations';
 import trainRoutes from './routes/trainRoutes';
 import stationRoutes from './routes/stationRoutes';
+import chatRoutes from './routes/chatRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load env vars
@@ -51,6 +52,7 @@ if (process.env.NODE_ENV === 'development') {
 // Mount routers
 app.use('/api/trains', trainRoutes);
 app.use('/api/stations', stationRoutes);
+app.use('/api/chat', chatRoutes);
 
 // API Home/Status
 app.get('/api', (req: Request, res: Response) => {

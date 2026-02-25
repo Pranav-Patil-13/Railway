@@ -85,6 +85,25 @@
   }
   body {
     @apply bg-background text-text-primary antialiased;
+    font-family: 'Inter', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+@layer utilities {
+  @keyframes slowFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .animate-slow-fade {
+    animation: slowFade 1.5s ease-out forwards;
+  }
+
+  .text-stroke-white {
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+  }
+
+  .text-stroke-primary {
+    -webkit-text-stroke: 1px var(--primary);
   }
 }

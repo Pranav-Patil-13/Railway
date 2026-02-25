@@ -12,14 +12,15 @@ interface StationInputProps {
     value: string;
     onChange: (value: string, stationCode?: string) => void;
     icon: React.ReactNode;
+    className?: string;
 }
 
-export function StationInput({ placeholder, value, onChange, icon }: StationInputProps) {
+export function StationInput({ placeholder, value, onChange, icon, className }: StationInputProps) {
     const [suggestions, setSuggestions] = useState<Station[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [highlightIndex, setHighlightIndex] = useState(-1);
-    const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -100,7 +101,7 @@ export function StationInput({ placeholder, value, onChange, icon }: StationInpu
                 ref={inputRef}
                 type="text"
                 placeholder={placeholder}
-                className="w-full h-16 pl-12 pr-4 bg-secondary/20 hover:bg-secondary/40 focus:bg-surface border-2 border-transparent focus:border-primary/30 rounded-2xl outline-none transition-all text-lg font-medium placeholder:text-text-secondary/50"
+                className={className || "w-full h-16 pl-12 pr-4 bg-secondary/20 hover:bg-secondary/40 focus:bg-surface border-2 border-transparent focus:border-primary/30 rounded-2xl outline-none transition-all text-lg font-medium placeholder:text-text-secondary/50"}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onFocus={() => { if (suggestions.length > 0) setIsOpen(true); }}
@@ -117,7 +118,7 @@ export function StationInput({ placeholder, value, onChange, icon }: StationInpu
 
             {/* Dropdown */}
             {isOpen && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 text-slate-900">
                     <div className="max-h-64 overflow-y-auto">
                         {suggestions.map((station, i) => (
                             <button
@@ -126,8 +127,8 @@ export function StationInput({ placeholder, value, onChange, icon }: StationInpu
                                 onClick={() => selectStation(station)}
                                 onMouseEnter={() => setHighlightIndex(i)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${i === highlightIndex
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'hover:bg-secondary/50 text-text-primary'
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'hover:bg-secondary/50 text-text-primary'
                                     }`}
                             >
                                 <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-xs font-bold text-text-secondary shrink-0">

@@ -22,6 +22,8 @@ import {
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/States';
 import { TrainDetailsCard } from '../components/TrainDetailsCard';
 import { RouteExplorer } from '../components/RouteExplorer';
+import { Footer } from '../components/Footer';
+import train1 from '../assets/train1.jpg';
 
 const POPULAR_TRAINS = [
     { number: '12951', name: 'Mumbai Rajdhani' },
@@ -41,8 +43,15 @@ export function Search() {
     const [hasSearched, setHasSearched] = useState(false);
     const [recentSearches, setRecentSearches] = useState<{ number: string, name: string }[]>([]);
     const [searchMode, setSearchMode] = useState<'train' | 'route'>('train');
+    const [scrollY, setScrollY] = useState(0);
 
     const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const handleScroll = () => setScrollY(window.scrollY);
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     useEffect(() => {
         const saved = localStorage.getItem('recentSearches');
@@ -134,17 +143,36 @@ export function Search() {
     return (
         <PageWrapper>
             <Navbar />
-            <main className="flex-1 py-12">
+
+            {/* Header Background Section */}
+            <div className="relative h-[28rem] w-full bg-slate-900 overflow-hidden">
+                <img
+                    src={train1}
+                    alt="Background"
+                    className="w-full h-full object-cover opacity-50 animate-slow-fade"
+                    style={{
+                        transform: `scale(1.2) translateY(${scrollY * 0.3}px)`,
+                        willChange: 'transform'
+                    }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-background"></div>
+            </div>
+
+            <main className="flex-1 -mt-64 relative z-10 pb-12">
                 <Container>
                     <div className="max-w-3xl mx-auto space-y-12">
 
                         {/* Header Section */}
-                        <div className="text-center space-y-4">
-                            <h1 className="text-4xl font-extrabold tracking-tight text-text-primary sm:text-5xl">
-                                Tracking <span className="text-primary text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Simplicity.</span>
+                        <div className="text-center space-y-6 mb-12">
+                            <div className="inline-flex items-center gap-3 px-4 py-1 bg-white/5 backdrop-blur-md rounded-full border border-white/10 mb-4">
+                                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.4em]">Real-Time Tracking</span>
+                            </div>
+                            <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] drop-shadow-sm">
+                                <span className="text-white">Tracking</span> <span className="italic text-primary">Simplicity.</span>
                             </h1>
-                            <p className="text-lg text-text-secondary max-w-xl mx-auto">
-                                Search for any Indian Railways train by <span className="text-text-primary font-semibold underline decoration-primary/30">number</span> or <span className="text-text-primary font-semibold underline decoration-primary/30">name.</span>
+                            <p className="text-lg md:text-xl text-slate-600 max-w-xl mx-auto font-medium leading-relaxed pt-2">
+                                Search for any Indian Railways train by <span className="text-slate-900 border-b-2 border-primary/20">number</span> or <span className="text-slate-900 border-b-2 border-primary/20">name</span> instantly.
                             </p>
                         </div>
 
@@ -185,7 +213,7 @@ export function Search() {
                                             </div>
                                             <Input
                                                 placeholder="Enter train number or name (e.g. Rajdhani)"
-                                                className="pl-12 h-14 text-lg border-transparent bg-secondary/30 focus:bg-surface transition-all rounded-xl"
+                                                className="pl-12 h-14 text-lg border-transparent bg-secondary/30 focus:bg-surface transition-all rounded-xl text-slate-900"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                             />
@@ -375,6 +403,7 @@ export function Search() {
                     </div>
                 </Container>
             </main>
+            <Footer />
         </PageWrapper>
     );
 }

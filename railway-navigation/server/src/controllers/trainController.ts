@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { Train } from '../models/Train';
-import { Station } from '../models/Station';
 import { AppError } from '../utils/AppError';
+import { resolveStationCodes as resolveStationCodesFromService, getLiveTrainStatus as fetchLiveTrainStatus } from '../services/trainService';
+
 
 export const getTrains = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -49,21 +50,7 @@ export const searchRoutes = async (req: Request, res: Response, next: NextFuncti
         // Step 0: Resolve station names to station codes using the Station collection.
         // User may type "Chalisgaon" or "CSN" — we need to handle both.
         const resolveStationCodes = async (input: string): Promise<string[]> => {
-            if (!input) return [];
-
-            // First try exact code match
-            const exactCode = await Station.findOne({ code: input.toUpperCase() }).lean();
-            if (exactCode) return [exactCode.code];
-
-            // Try matching by station name (case-insensitive)
-            const byName = await Station.find({
-                name: { $regex: input, $options: 'i' }
-            }).select('code').limit(20).lean();
-
-            if (byName.length > 0) return byName.map(s => s.code);
-
-            // Fallback: return the input as-is (might be a partial code)
-            return [input.toUpperCase()];
+            return await resolveStationCodesFromService(input);
         };
 
         const fromCodes = await resolveStationCodes(fromInput);
@@ -205,5 +192,33 @@ export const getTrainByNumber = async (req: Request, res: Response, next: NextFu
         });
     } catch (error) {
         next(error);
+    }
+};
+
+export const getLiveStatus = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const trainNumber = String(req.params.trainNumber);
+        let { date } = req.query; // Expecting YYYYMMDD
+
+        if (!date) {
+            // Default to today if no date provided
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            date = `${yyyy}${mm}${dd}`;
+        }
+
+        const dateStr = Array.isArray(date) ? String(date[0]) : String(date);
+        const liveData = await fetchLiveTrainStatus(trainNumber, dateStr as string);
+
+        // The API returns its own status, wrap it or return directly
+        // Some RapidAPI return errors gracefully in JSON, so we forward it
+        res.status(200).json({
+            success: true,
+            data: liveData
+        });
+    } catch (error) {
+        next(new AppError('Failed to fetch live train status, ensure the RapidAPI Key is valid and subscribed.', 500));
     }
 };

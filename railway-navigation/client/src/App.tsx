@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Search } from './pages/Search';
 import ARNavigationPage from './pages/ARNavigationPage';
+import { ChatBot } from './components/ChatBot';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         {/* Fallback for 404 */}
         <Route path="*" element={<Home />} />
       </Routes>
+      <ChatBot />
     </Router>
   );
 }

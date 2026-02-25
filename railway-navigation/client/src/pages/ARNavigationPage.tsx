@@ -146,6 +146,27 @@ const ARNavigationPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Desktop Warning Banner */}
+            <div className="hidden lg:flex w-full max-w-2xl mb-8 bg-amber-50 border border-amber-200 rounded-2xl p-4 items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                    <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div className="flex-1">
+                    <h4 className="text-sm font-bold text-amber-900">Mobile Device Recommended</h4>
+                    <p className="text-xs text-amber-700 font-medium">AR navigation is optimized for movement. For the best experience, please open this page on your smartphone using the QR code found at the station.</p>
+                </div>
+                <button
+                    onClick={(e) => (e.currentTarget.parentElement as HTMLElement).style.display = 'none'}
+                    className="p-2 text-amber-400 hover:text-amber-600 transition-colors"
+                >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 md:p-8 space-y-6">
                 <div className="text-center space-y-2">
                     <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-2">
