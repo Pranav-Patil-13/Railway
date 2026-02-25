@@ -79,7 +79,7 @@ export function Home() {
                             Everything you need for a <br className="hidden md:block" />
                             <span className="relative">
                                 <span className="relative z-10 text-primary italic">smarter</span>
-                                <span className="absolute bottom-2 left-0 w-full h-4 bg-primary/10 -rotate-1"></span>
+                                <span className="absolute bottom-2 left-0 w-full h-4 -rotate-1" style={{ backgroundColor: 'color-mix(in oklab, var(--color-primary) 10%, #4dff00)' }}></span>
                             </span> journey.
                         </h3>
                         <p className="text-slate-500 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto font-medium">
