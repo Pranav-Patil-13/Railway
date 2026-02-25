@@ -14,9 +14,15 @@ export function RouteExplorer({ className, minimal = false }: { className?: stri
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (from || to) {
-            const fromParam = fromCode || from;
-            const toParam = toCode || to;
-            navigate(`/search?from=${encodeURIComponent(fromParam)}&to=${encodeURIComponent(toParam)}`);
+            const fromParam = fromCode || from || '';
+            const toParam = toCode || to || '';
+
+            // Only add parameters that have a value to not pollute the URL
+            const params = new URLSearchParams();
+            if (fromParam) params.append('from', fromParam);
+            if (toParam) params.append('to', toParam);
+
+            navigate(`/search?${params.toString()}`);
         }
     };
 

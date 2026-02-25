@@ -31,6 +31,13 @@ export const TrainService = {
     getByNumber: async (trainNumber: string) => {
         const { data } = await api.get(`/trains/${trainNumber}`);
         return data;
+    },
+
+    getLiveStatus: async (trainNumber: string, date?: string) => {
+        const params: any = {};
+        if (date) params.date = date;
+        const { data } = await api.get(`/trains/${trainNumber}/live`, { params });
+        return data;
     }
 };
 

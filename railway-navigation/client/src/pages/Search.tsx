@@ -66,7 +66,7 @@ export function Search() {
         if (from || to) {
             setSearchMode('route');
             performSearch('', from || undefined, to || undefined);
-        } else if (search) {
+        } else if (search !== null) {
             setSearchMode('train');
             performSearch(search);
         }

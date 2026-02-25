@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { type ITrain } from '../types/Train';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
-import { Train, MapPin, ArrowRight, Clock, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Train, MapPin, ArrowRight, Clock, Calendar, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { LiveStatus } from './LiveStatus';
+
 
 interface TrainDetailsCardProps {
     train: ITrain;
@@ -9,6 +11,7 @@ interface TrainDetailsCardProps {
 
 export function TrainDetailsCard({ train }: TrainDetailsCardProps) {
     const [showFullRoute, setShowFullRoute] = useState(false);
+    const [activeTab, setActiveTab] = useState<'schedule' | 'live'>('schedule');
 
     // Determine the slice of stops to show
     const matched = train.matchedRoute;
@@ -105,109 +108,139 @@ export function TrainDetailsCard({ train }: TrainDetailsCardProps) {
                     </div>
                 </div>
 
-                {/* Stops Table */}
-                <div className="animate-in fade-in slide-in-from-left-2 duration-300 delay-200">
-                    <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-text-secondary" />
-                            <span className="text-sm font-bold text-text-secondary uppercase tracking-wider">
-                                {showFullRoute ? 'Full Schedule' : 'Segment Schedule'}
-                            </span>
-                        </div>
+                {/* Tabs */}
+                <div className="flex bg-surface border border-border rounded-xl p-1.5 shadow-sm ring-1 ring-border/50 max-w-sm mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
+                    <button
+                        onClick={() => setActiveTab('schedule')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold transition-all text-xs uppercase tracking-wider ${activeTab === 'schedule'
+                            ? 'bg-primary text-white shadow-md shadow-primary/20'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-secondary/50'
+                            }`}
+                    >
+                        <Clock className="h-4 w-4" /> Schedule
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('live')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold transition-all text-xs uppercase tracking-wider relative overflow-hidden ${activeTab === 'live'
+                            ? 'bg-primary text-white shadow-md shadow-primary/20'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-secondary/50'
+                            }`}
+                    >
+                        {activeTab !== 'live' && <span className="absolute inset-0 bg-primary/5 opacity-0 hover:opacity-100 transition-opacity" />}
+                        <Activity className={`h-4 w-4 ${activeTab === 'live' ? 'animate-pulse' : ''}`} />
+                        Live Status
+                    </button>
+                </div>
 
-                        {matched && (
-                            <button
-                                onClick={() => setShowFullRoute(!showFullRoute)}
-                                className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-accent transition-colors bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20"
-                            >
-                                {showFullRoute ? (
-                                    <>
-                                        <ChevronUp className="h-3.5 w-3.5" />
-                                        Show Segment Only
-                                    </>
-                                ) : (
-                                    <>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                        Show Full Route
-                                    </>
+                {/* Tab Content */}
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+                    {activeTab === 'schedule' ? (
+                        <>
+                            <div className="flex items-center justify-between mb-3 px-1">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-text-secondary" />
+                                    <span className="text-sm font-bold text-text-secondary uppercase tracking-wider">
+                                        {showFullRoute ? 'Full Schedule' : 'Segment Schedule'}
+                                    </span>
+                                </div>
+
+                                {matched && (
+                                    <button
+                                        onClick={() => setShowFullRoute(!showFullRoute)}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-accent transition-colors bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20"
+                                    >
+                                        {showFullRoute ? (
+                                            <>
+                                                <ChevronUp className="h-3.5 w-3.5" />
+                                                Show Segment Only
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ChevronDown className="h-3.5 w-3.5" />
+                                                Show Full Route
+                                            </>
+                                        )}
+                                    </button>
                                 )}
-                            </button>
-                        )}
-                    </div>
+                            </div>
 
-                    <div className="rounded-2xl border border-border/50 overflow-hidden shadow-sm bg-surface">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="bg-secondary/40">
-                                        <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em] w-16">
-                                            #
-                                        </th>
-                                        <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em]">
-                                            Station
-                                        </th>
-                                        <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em]">
-                                            Arrival
-                                        </th>
-                                        <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em]">
-                                            Departure
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border/30">
-                                    {stopsToShow.map((stop, index) => {
-                                        const globalIndex = matched && !showFullRoute ? matched.fromStopIndex + index : index;
-                                        const isFirstToShow = index === 0;
-                                        const isLastToShow = index === stopsToShow.length - 1;
-
-                                        return (
-                                            <tr
-                                                key={`${stop.stationCode}-${globalIndex}`}
-                                                className={`
-                                                    transition-colors hover:bg-secondary/20
-                                                    ${isFirstToShow || isLastToShow ? 'bg-primary/[0.02]' : ''}
-                                                `}
-                                            >
-                                                <td className="py-4 px-5 text-xs font-bold text-text-secondary">
-                                                    {globalIndex + 1}
-                                                </td>
-                                                <td className="py-4 px-5">
-                                                    <div className="flex flex-col">
-                                                        <span className={`font-bold tracking-tight ${isFirstToShow || isLastToShow ? 'text-primary' : 'text-text-primary'}`}>
-                                                            {stop.stationCode}
-                                                        </span>
-                                                        {isFirstToShow && matched && !showFullRoute && (
-                                                            <span className="text-[10px] font-bold text-primary/60 uppercase leading-none mt-1">Starting Point</span>
-                                                        )}
-                                                        {isLastToShow && matched && !showFullRoute && (
-                                                            <span className="text-[10px] font-bold text-primary/60 uppercase leading-none mt-1">End Point</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-5 font-mono text-xs font-bold text-text-primary">
-                                                    {stop.arrival}
-                                                </td>
-                                                <td className="py-4 px-5 font-mono text-xs font-bold text-text-primary">
-                                                    {stop.departure}
-                                                </td>
+                            <div className="rounded-2xl border border-border/50 overflow-hidden shadow-sm bg-surface mb-2">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="bg-secondary/40">
+                                                <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em] w-16">
+                                                    #
+                                                </th>
+                                                <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em]">
+                                                    Station
+                                                </th>
+                                                <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em]">
+                                                    Arrival
+                                                </th>
+                                                <th className="text-left py-4 px-5 font-bold text-text-secondary text-[10px] uppercase tracking-[0.2em]">
+                                                    Departure
+                                                </th>
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/30">
+                                            {stopsToShow.map((stop, index) => {
+                                                const globalIndex = matched && !showFullRoute ? matched.fromStopIndex + index : index;
+                                                const isFirstToShow = index === 0;
+                                                const isLastToShow = index === stopsToShow.length - 1;
 
-                    {!showFullRoute && matched && (
-                        <p className="mt-3 text-[11px] text-center text-text-secondary font-medium">
-                            Only showing stations relevant to your search.
-                            <button
-                                onClick={() => setShowFullRoute(true)}
-                                className="ml-1 text-primary hover:underline font-bold"
-                            >
-                                Tap here to see the full train route.
-                            </button>
-                        </p>
+                                                return (
+                                                    <tr
+                                                        key={`${stop.stationCode}-${globalIndex}`}
+                                                        className={`
+                                                            transition-colors hover:bg-secondary/20
+                                                            ${isFirstToShow || isLastToShow ? 'bg-primary/[0.02]' : ''}
+                                                        `}
+                                                    >
+                                                        <td className="py-4 px-5 text-xs font-bold text-text-secondary">
+                                                            {globalIndex + 1}
+                                                        </td>
+                                                        <td className="py-4 px-5">
+                                                            <div className="flex flex-col">
+                                                                <span className={`font-bold tracking-tight ${isFirstToShow || isLastToShow ? 'text-primary' : 'text-text-primary'}`}>
+                                                                    {stop.stationCode}
+                                                                </span>
+                                                                {isFirstToShow && matched && !showFullRoute && (
+                                                                    <span className="text-[10px] font-bold text-primary/60 uppercase leading-none mt-1">Starting Point</span>
+                                                                )}
+                                                                {isLastToShow && matched && !showFullRoute && (
+                                                                    <span className="text-[10px] font-bold text-primary/60 uppercase leading-none mt-1">End Point</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 px-5 font-mono text-xs font-bold text-text-primary">
+                                                            {stop.arrival}
+                                                        </td>
+                                                        <td className="py-4 px-5 font-mono text-xs font-bold text-text-primary">
+                                                            {stop.departure}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {!showFullRoute && matched && (
+                                <p className="mt-3 text-[11px] text-center text-text-secondary font-medium">
+                                    Only showing stations relevant to your search.
+                                    <button
+                                        onClick={() => setShowFullRoute(true)}
+                                        className="ml-1 text-primary hover:underline font-bold"
+                                    >
+                                        Tap here to see the full train route.
+                                    </button>
+                                </p>
+                            )}
+                        </>
+                    ) : (
+                        <LiveStatus trainNumber={train.trainNumber} />
                     )}
                 </div>
             </CardContent>

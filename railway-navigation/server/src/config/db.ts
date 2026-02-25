@@ -2,9 +2,9 @@ import mongoose from 'mongoose';
 
 export const connectDB = async () => {
     try {
-        const mongoURI = process.env.MONGO_URI;
+        const mongoURI = process.env.MONGO_URL || process.env.DATABASE_URL || process.env.MONGO_URI;
         if (!mongoURI) {
-            throw new Error('MONGO_URI must be defined in the .env file');
+            throw new Error('MongoDB connection string must be defined in the .env file or environment variables (MONGO_URL, DATABASE_URL, MONGO_URI)');
         }
 
         const conn = await mongoose.connect(mongoURI, {
