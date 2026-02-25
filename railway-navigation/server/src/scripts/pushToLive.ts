@@ -28,10 +28,22 @@ const main = async () => {
             process.exit(0);
         }
 
-        // Clean Mongo objects
+        // Clean Mongo objects and handle validation edge-cases
         const cleanedTrains = allTrains.map((t: any) => {
             delete t._id;
             delete t.__v;
+
+            // Fix Kaggle Data flaws that trigger schema validation errors on strict insertion
+            if (!t.trainName || t.trainName.trim() === '') {
+                t.trainName = `Train ${t.trainNumber}`;
+            }
+            if (!t.source || t.source.trim() === '') {
+                t.source = 'Unknown Source';
+            }
+            if (!t.destination || t.destination.trim() === '') {
+                t.destination = 'Unknown Destination';
+            }
+
             return t;
         });
 
