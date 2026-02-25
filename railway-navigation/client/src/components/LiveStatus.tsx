@@ -101,8 +101,12 @@ export function LiveStatus({ trainNumber }: LiveStatusProps) {
 
     const { train_status_message, current_station, time_of_availability, stations } = liveData;
 
+    const statusMsgLower = (train_status_message || '').toLowerCase();
+    const isNotRunningToday = statusMsgLower.includes('runs only on') || statusMsgLower.includes('does not run');
+
     // Filter out stations that RapidAPI might return with empty names when the train hasn't started yet
-    const validStations = stations ? stations.filter((s: any) => s && s.stationName && s.stationName.trim() !== '') : [];
+    // Do not show the timeline if the train is not running today
+    const validStations = (stations && !isNotRunningToday) ? stations.filter((s: any) => s && s.stationName && s.stationName.trim() !== '') : [];
 
     return (
         <div className="animate-in fade-in zoom-in-95 duration-500 rounded-2xl border border-primary/20 bg-surface shadow-lg overflow-hidden flex flex-col">
@@ -200,10 +204,21 @@ export function LiveStatus({ trainNumber }: LiveStatusProps) {
                     }) : (
                         <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-surface rounded-2xl border border-dashed border-border/60 relative z-10 w-full animate-in fade-in zoom-in-95 duration-500">
                             <Clock className="h-10 w-10 text-primary/40 mb-3 animate-pulse" />
-                            <h4 className="text-lg font-black text-text-primary mb-1">Journey Not Started</h4>
-                            <p className="text-sm font-medium text-text-secondary max-w-[260px] leading-relaxed">
-                                This train hasn't departed its source station for today's run. Live location radar will activate automatically once it departs!
-                            </p>
+                            {isNotRunningToday ? (
+                                <>
+                                    <h4 className="text-lg font-black text-text-primary mb-1">Not Running Today</h4>
+                                    <p className="text-sm font-medium text-text-secondary max-w-[280px] leading-relaxed">
+                                        {train_status_message}. Check carefully for the correct scheduled running days.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <h4 className="text-lg font-black text-text-primary mb-1">Journey Not Started</h4>
+                                    <p className="text-sm font-medium text-text-secondary max-w-[260px] leading-relaxed">
+                                        This train hasn't departed its source station for today's run. Live location radar will activate automatically once it departs!
+                                    </p>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
