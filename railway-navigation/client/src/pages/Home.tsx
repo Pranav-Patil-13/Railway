@@ -45,7 +45,7 @@ export function Home() {
                             <span className="px-2 py-1 bg-white/10 backdrop-blur-md rounded border border-white/10">Security</span>
                             <span className="px-2 py-1 bg-white/10 backdrop-blur-md rounded border border-white/10">Punctuality</span>
                         </div>
-                        <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white mb-6 drop-shadow-2xl tracking-tighter leading-[0.9] text-stroke-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+                        <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white mb-6 drop-shadow-2xl tracking-tighter leading-[0.9]" style={{ fontFamily: 'Inter, sans-serif', WebkitTextStroke: '3px black' }}>
                             Indian Railways
                         </h1>
                         <p className="max-w-2xl text-lg sm:text-2xl text-white/80 font-medium drop-shadow-lg leading-relaxed hidden sm:block border-l-4 border-primary pl-6">
