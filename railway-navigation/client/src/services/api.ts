@@ -38,6 +38,11 @@ export const TrainService = {
         if (date) params.date = date;
         const { data } = await api.get(`/trains/${trainNumber}/live`, { params });
         return data;
+    },
+
+    getReservationChart: async (trainNumber: string, date: string) => {
+        const { data } = await api.get(`/trains/${trainNumber}/charts`, { params: { date } });
+        return data;
     }
 };
 

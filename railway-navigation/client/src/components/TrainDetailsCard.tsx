@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { type ITrain } from '../types/Train';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
-import { Train, MapPin, ArrowRight, Clock, Calendar, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { Train, MapPin, ArrowRight, Clock, Calendar, ChevronDown, ChevronUp, Activity, Image as ImageIcon, Ticket } from 'lucide-react';
 import { LiveStatus } from './LiveStatus';
+import { StationPhotos } from './StationPhotos';
+import { SeatMap } from './SeatMap';
 
 
 interface TrainDetailsCardProps {
@@ -11,7 +13,7 @@ interface TrainDetailsCardProps {
 
 export function TrainDetailsCard({ train }: TrainDetailsCardProps) {
     const [showFullRoute, setShowFullRoute] = useState(false);
-    const [activeTab, setActiveTab] = useState<'schedule' | 'live'>('schedule');
+    const [activeTab, setActiveTab] = useState<'schedule' | 'live' | 'gallery' | 'charts'>('schedule');
 
     // Determine the slice of stops to show
     const matched = train.matchedRoute;
@@ -109,7 +111,7 @@ export function TrainDetailsCard({ train }: TrainDetailsCardProps) {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex bg-surface border border-border rounded-xl p-1.5 shadow-sm ring-1 ring-border/50 max-w-sm mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
+                <div className="flex bg-surface border border-border rounded-xl p-1.5 shadow-sm ring-1 ring-border/50 max-w-2xl overflow-x-auto whitespace-nowrap scrollbar-hide mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
                     <button
                         onClick={() => setActiveTab('schedule')}
                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold transition-all text-xs uppercase tracking-wider ${activeTab === 'schedule'
@@ -129,6 +131,28 @@ export function TrainDetailsCard({ train }: TrainDetailsCardProps) {
                         {activeTab !== 'live' && <span className="absolute inset-0 bg-primary/5 opacity-0 hover:opacity-100 transition-opacity" />}
                         <Activity className={`h-4 w-4 ${activeTab === 'live' ? 'animate-pulse' : ''}`} />
                         Live Status
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('gallery')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold transition-all text-xs uppercase tracking-wider relative overflow-hidden ${activeTab === 'gallery'
+                            ? 'bg-primary text-white shadow-md shadow-primary/20'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-secondary/50'
+                            }`}
+                    >
+                        {activeTab !== 'gallery' && <span className="absolute inset-0 bg-primary/5 opacity-0 hover:opacity-100 transition-opacity" />}
+                        <ImageIcon className="h-4 w-4" />
+                        Gallery
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('charts')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold transition-all text-xs uppercase tracking-wider relative overflow-hidden ${activeTab === 'charts'
+                            ? 'bg-primary text-white shadow-md shadow-primary/20'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-secondary/50'
+                            }`}
+                    >
+                        {activeTab !== 'charts' && <span className="absolute inset-0 bg-primary/5 opacity-0 hover:opacity-100 transition-opacity" />}
+                        <Ticket className="h-4 w-4" />
+                        Charts
                     </button>
                 </div>
 
@@ -239,10 +263,17 @@ export function TrainDetailsCard({ train }: TrainDetailsCardProps) {
                                 </p>
                             )}
                         </>
-                    ) : (
+                    ) : activeTab === 'live' ? (
                         <LiveStatus trainNumber={train.trainNumber} />
-                    )}
+                    ) : activeTab === 'gallery' ? (
+                        <StationPhotos stationCodes={stopsToShow.map(s => s.stationCode)} />
+                    ) : null}
                 </div>
+                {activeTab === 'charts' && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                        <SeatMap trainNumber={train.trainNumber} />
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

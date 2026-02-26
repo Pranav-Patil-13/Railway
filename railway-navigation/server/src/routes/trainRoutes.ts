@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getTrains, getTrainByNumber, searchRoutes, getLiveStatus } from '../controllers/trainController';
+import { getTrains, getTrainByNumber, searchRoutes, getLiveStatus, getReservationChart } from '../controllers/trainController';
 
 const router = Router();
 
@@ -14,5 +14,8 @@ router.route('/:trainNumber')
 
 router.route('/:trainNumber/live')
     .get(getLiveStatus);
+
+router.route('/:trainNumber/charts')
+    .get(getReservationChart);
 
 export default router;

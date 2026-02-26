@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container } from './Layout';
-import { Train, Search as SearchIcon, Navigation } from 'lucide-react';
+import { Train, Search as SearchIcon, Navigation, Image as ImageIcon } from 'lucide-react';
 import { Button } from './Button';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../utils/cn';
@@ -20,6 +20,7 @@ export function Navbar() {
     const navItems = [
         { path: '/', label: 'Railways', icon: Train },
         { path: '/search', label: 'Search Trains', icon: SearchIcon },
+        { path: '/gallery', label: 'Gallery', icon: ImageIcon },
         { path: '/ar-navigate', label: 'AR Navigation', icon: Navigation },
     ];
 

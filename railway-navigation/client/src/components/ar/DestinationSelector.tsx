@@ -1,5 +1,7 @@
-import React from 'react';
-import { Train, MapPin, Ticket, DoorOpen, Clock, Droplets, Coffee, GlassWater, ArrowRight } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Train, MapPin, Ticket, DoorOpen, Clock, Droplets, Coffee, GlassWater, ArrowRight, Mic } from 'lucide-react';
+import { useVoice } from '../../hooks/useVoice';
+import { cn } from '../../utils/cn';
 import type { Coordinate } from '../../types';
 
 interface DestinationSelectorProps {
@@ -36,6 +38,51 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({ stationName, 
 
     // Sort coaches naturally (S1, S2, ..., B1, B2, ..., A1, A2)
     coaches.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+
+    // Voice assistant logic
+    const { isListening, transcript, startListening, stopListening, hasSupport } = useVoice();
+    const [statusText, setStatusText] = useState('Tap to speak...');
+    const commandTimeout = useRef<any>(null);
+
+    useEffect(() => {
+        if (!isListening && transcript) {
+            processVoiceCommand(transcript);
+        } else if (transcript) {
+            if (commandTimeout.current) clearTimeout(commandTimeout.current);
+            commandTimeout.current = setTimeout(() => {
+                stopListening();
+            }, 1000);
+        }
+    }, [isListening, transcript]);
+
+    const processVoiceCommand = (text: string) => {
+        setStatusText('Processing...');
+        text = text.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+
+        const allDestinations = [...coaches, ...facilities];
+
+        let matched = allDestinations.find(d => {
+            const label = d.label.toLowerCase();
+            return text.includes(label) || label.includes(text) || (text.includes('coach') && text.includes(label.replace('coach', '').trim()));
+        });
+
+        if (matched) {
+            setStatusText(`Navigating to ${matched.label}...`);
+            setTimeout(() => {
+                onSelect(matched.key, matched.key.startsWith('coach_') ? `Coach ${matched.label}` : matched.label, matched.coord);
+            }, 800);
+        } else {
+            setStatusText('Not found. Tap to try again.');
+        }
+    };
+
+    const toggleListening = () => {
+        if (isListening) stopListening();
+        else {
+            setStatusText('Listening for destination...');
+            startListening();
+        }
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 py-8 px-4">
@@ -97,6 +144,33 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({ stationName, 
                                 </button>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* AR Voice Assistant Bubble */}
+                {hasSupport && (
+                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3">
+                        <div className={cn(
+                            "px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase shadow-md backdrop-blur-md border transition-all",
+                            isListening ? "bg-red-500/20 text-red-600 border-red-200" : "bg-white/80 text-slate-500 border-slate-200"
+                        )}>
+                            {statusText}
+                        </div>
+                        <button
+                            onClick={toggleListening}
+                            className={cn(
+                                "relative flex items-center justify-center w-16 h-16 rounded-full shadow-2xl transition-all duration-300 outline-none focus:ring-4 focus:ring-indigo-500/50",
+                                isListening ? "bg-red-500 text-white animate-pulse" : "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 active:scale-95"
+                            )}
+                        >
+                            {isListening && (
+                                <>
+                                    <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75" />
+                                    <div className="absolute inset-0 rounded-full bg-red-400 opacity-50 blur-md animate-pulse" />
+                                </>
+                            )}
+                            <Mic className="w-8 h-8 relative z-10" />
+                        </button>
                     </div>
                 )}
             </div>
