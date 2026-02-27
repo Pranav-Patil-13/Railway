@@ -107,25 +107,125 @@ export const searchTrainsByRoute = async (fromInput?: string, toInput?: string) 
 
 export const getLiveTrainStatus = async (trainNumber: string, dateStr: string) => {
     try {
+        const apiKey = process.env.RAPID_API_KEY;
+
+        if (!apiKey) {
+            console.error('CRITICAL: RAPID_API_KEY is missing in environment variables.');
+            throw new Error('RapidAPI Key is not configured. Please check your .env file.');
+        }
+
+        // Calculate startDay based on dateStr (YYYYMMDD) and today's date
+        let startDay = 0;
+        if (dateStr && dateStr.length === 8) {
+            const year = parseInt(dateStr.substring(0, 4));
+            const month = parseInt(dateStr.substring(4, 6)) - 1;
+            const day = parseInt(dateStr.substring(6, 8));
+            const inputDate = new Date(year, month, day);
+
+            const today = new Date();
+            const todayIST = new Date(today.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            const todayMidnight = new Date(todayIST.getFullYear(), todayIST.getMonth(), todayIST.getDate());
+
+            const diffTime = todayMidnight.getTime() - inputDate.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            startDay = diffDays > 0 ? diffDays : 0;
+            if (startDay > 4) startDay = 4;
+        }
+
         const options = {
             method: 'GET',
-            url: 'https://indian-railway-irctc.p.rapidapi.com/api/trains/v1/train/status',
+            url: 'https://irctc1.p.rapidapi.com/api/v1/liveTrainStatus',
             params: {
-                departure_date: dateStr, // Format: YYYYMMDD
-                isH5: 'true',
-                client: 'web',
-                train_number: trainNumber
+                trainNo: trainNumber,
+                startDay: startDay.toString()
             },
             headers: {
-                'X-RapidAPI-Key': process.env.RAPID_API_KEY,
-                'X-RapidAPI-Host': 'indian-railway-irctc.p.rapidapi.com'
+                'X-RapidAPI-Key': apiKey,
+                'X-RapidAPI-Host': 'irctc1.p.rapidapi.com'
             }
         };
 
         const response = await axios.request(options);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching live train status from RapidAPI:', error);
+        const rawData = response.data?.data;
+
+        // If data cannot be parsed reliably, return raw response or error structure
+        if (!rawData) {
+            return { error: 'Invalid response from train status API', body: null };
+        }
+
+        // If train is not running today, return early to let frontend handle it gracefully
+        if (rawData.is_run_day === false) {
+            return {
+                error: null,
+                body: {
+                    train_status_message: rawData.new_message || rawData.title || 'Train is not running today.',
+                    current_station: '',
+                    time_of_availability: '',
+                    stations: [],
+                    terminated: false
+                }
+            };
+        }
+
+        // Combine previous and upcoming stations for complete timeline
+        const previous = rawData.previous_stations || [];
+        const upcoming = rawData.upcoming_stations || [];
+        const allRawStations: any[] = [];
+
+        for (const s of previous) {
+            if (s.station_code) allRawStations.push(s);
+        }
+        for (const s of upcoming) {
+            if (s.station_code) allRawStations.push(s);
+        }
+
+        // Map to legacy format expected by the frontend
+        const mappedStations = allRawStations.map((s: any) => ({
+            stationName: s.station_name,
+            stationCode: s.station_code,
+            distance: s.distance_from_source || 0,
+            dayCount: (s.a_day !== undefined && s.a_day !== null) ? s.a_day : (s.day || 1),
+            arrivalTime: s.sta || '--',
+            departureTime: s.std || '--',
+            actual_arrival_time: s.eta || '--',
+            actual_departure_time: s.etd || '--'
+        }));
+
+        let train_status_message = rawData.new_message || rawData.title || 'Train status available';
+        if (rawData.current_location_info && rawData.current_location_info.length > 0) {
+            train_status_message = rawData.current_location_info[0].message || train_status_message;
+        }
+
+        // Create matching body payload
+        const transform = {
+            error: null,
+            body: {
+                train_status_message: train_status_message,
+                current_station: rawData.current_station_code || rawData.next_station_code || '',
+                time_of_availability: rawData.update_time || rawData.status_as_of || 'Updated recently',
+                stations: mappedStations,
+                terminated: rawData.at_dstn || false
+            }
+        };
+
+        return transform;
+    } catch (error: any) {
+        if (error.response) {
+            console.error('RapidAPI Error Response:', {
+                status: error.response.status,
+                data: error.response.data
+            });
+
+            if (error.response.status === 401 || error.response.status === 403) {
+                console.error('RapidAPI Authentication Failed: The API key might be invalid or expired.');
+            }
+        } else if (error.request) {
+            console.error('RapidAPI No Response:', error.request);
+        } else {
+            console.error('RapidAPI Setup Error:', error.message);
+        }
+
         throw error;
     }
 };
